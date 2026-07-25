@@ -5658,7 +5658,12 @@ function ggPriceCardHTML(e){
   let cls='skip';
   if((hasOldR&&r<oldR)||(hasOldK&&k<oldK))cls='ok';
   else if((hasOldR&&r>oldR)||(hasOldK&&k>oldK))cls='up';
-  return`<div class="ggr-card ${cls}" data-appid="${esc(String(e.appid))}" tabindex="0">
+  // Retail vs. the game's own tracked price — the "By Discount" sort key.
+  // Cards with nothing to compare (no discount, or below-list retail
+  // missing) get no attribute, which parseFloat reads as NaN and the sort
+  // treats as lowest, sinking them to the bottom rather than the top.
+  const discPct=ggDiscountPct(r,e.price);
+  return`<div class="ggr-card ${cls}" data-appid="${esc(String(e.appid))}"${discPct!=null?` data-disc="${discPct}"`:''} tabindex="0">
     <button class="qb qr ggr-exclude" title="Exclude from Live Price checks" onclick="event.stopPropagation();_ggExcludeGame('${esc(String(e.appid))}')">${IC.close}</button>
     <div class="ggr-title">${esc(e.title)}</div>
     ${ggPriceStatHTML('Retail',r,oldR,lowR,e.price)}
@@ -5710,6 +5715,45 @@ function _ggShowFilterRow(show){
   const row=document.getElementById('ggFilterRow');
   if(row)row.style.display=show?'':'none';
 }
+
+// Recent/By Discount sort over the same card set — reorders the existing
+// .ggr-card elements in place (moves nodes, doesn't rebuild them), so it
+// works identically whether the grid came from the idle "last results"
+// reconstruction or a live run still appending batches. Discount reads the
+// data-disc attribute ggPriceCardHTML already sets from the game's own
+// retail-vs-tracked-price discount; cards with no discount to show have no
+// attribute, which sorts as lowest and sinks them below every real deal
+// rather than bunching them at the top.
+let _ggSortMode='hot';
+function _ggShowSortRow(show){
+  const row=document.getElementById('ggSortRow');
+  if(row)row.style.display=show?'':'none';
+}
+function _ggSetSort(mode){
+  _ggSortMode=mode;
+  document.querySelectorAll('#ggSortRow .fbar-pill').forEach(b=>{
+    b.classList.toggle('selected',b.dataset.sort===mode);
+  });
+  _ggApplySort();
+}
+function _ggApplySort(){
+  const gridEl=document.getElementById('ggFetchGrid');
+  if(!gridEl)return;
+  const cards=[...gridEl.querySelectorAll('.ggr-card')];
+  if(_ggSortMode==='discount'){
+    cards.sort((a,b)=>(parseFloat(b.dataset.disc)||-Infinity)-(parseFloat(a.dataset.disc)||-Infinity));
+  }else{
+    const hotnessOf=appid=>{
+      const g=games.find(x=>String(x.steamAppId)===appid);
+      return g?(parseInt(g.hotness)||0):0;
+    };
+    cards.sort((a,b)=>hotnessOf(b.dataset.appid)-hotnessOf(a.dataset.appid));
+  }
+  cards.forEach(c=>gridEl.appendChild(c));
+}
+document.querySelectorAll('#ggSortRow .fbar-pill').forEach(btn=>{
+  btn.onclick=()=>_ggSetSort(btn.dataset.sort);
+});
 function _ggSetCardFilter(filter){
   const gridEl=document.getElementById('ggFetchGrid');
   if(!gridEl)return;
@@ -5835,6 +5879,7 @@ async function openGgFetchModalIdle(skipShow){
   metaEl.textContent='Loading last results…';
   gridEl.innerHTML='';
   _ggShowFilterRow(false);
+  _ggShowSortRow(false);
   function doneLoading(){
     _ggIdleLoading=false;
     _ggSetButtonsForState();
@@ -5890,6 +5935,8 @@ async function openGgFetchModalIdle(skipShow){
   }).join('');
   _ggShowFilterRow(true);
   _ggSetCardFilter('all');
+  _ggShowSortRow(true);
+  _ggSetSort('hot');
 }
 
 function _ggEligibleGames(){
@@ -5958,6 +6005,8 @@ async function runGGDealsFetch(resumeState){
   gridEl.innerHTML='';
   _ggShowFilterRow(true);
   _ggSetCardFilter('all');
+  _ggShowSortRow(true);
+  _ggSetSort('hot');
   ov.classList.add('on');
   history.pushState({ggFetchOpen:true},'','');
   setProgress('Starting…');
@@ -6023,6 +6072,7 @@ async function runGGDealsFetch(resumeState){
       setProgress(`Batch ${b+1} of ${batches.length} done.`);
       gridEl.insertAdjacentHTML('beforeend',cardsHtml.join(''));
       _ggUpdateFilterUI();
+      _ggApplySort();
 
       if(SHEET_URL&&priceEntries.length){
         try{
