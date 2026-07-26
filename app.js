@@ -5658,11 +5658,13 @@ function ggPriceCardHTML(e){
   let cls='skip';
   if((hasOldR&&r<oldR)||(hasOldK&&k<oldK))cls='ok';
   else if((hasOldR&&r>oldR)||(hasOldK&&k>oldK))cls='up';
-  // Retail vs. the game's own tracked price — the "By Discount" sort key.
-  // Cards with nothing to compare (no discount, or below-list retail
-  // missing) get no attribute, which parseFloat reads as NaN and the sort
-  // treats as lowest, sinking them to the bottom rather than the top.
-  const discPct=ggDiscountPct(r,e.price);
+  // Best of Retail/Key vs. the game's own tracked price — the "By Discount"
+  // sort key, whichever field is actually the better deal right now, not
+  // just Retail. Cards with nothing to compare on either field get no
+  // attribute, which parseFloat reads as NaN and the sort treats as lowest,
+  // sinking them to the bottom rather than the top.
+  const discR=ggDiscountPct(r,e.price),discK=ggDiscountPct(k,e.price);
+  const discPct=discR==null?discK:(discK==null?discR:Math.max(discR,discK));
   return`<div class="ggr-card ${cls}" data-appid="${esc(String(e.appid))}"${discPct!=null?` data-disc="${discPct}"`:''} tabindex="0">
     <button class="qb qr ggr-exclude" title="Exclude from Live Price checks" onclick="event.stopPropagation();_ggExcludeGame('${esc(String(e.appid))}')">${IC.close}</button>
     <div class="ggr-title">${esc(e.title)}</div>
@@ -5720,10 +5722,10 @@ function _ggShowFilterRow(show){
 // .ggr-card elements in place (moves nodes, doesn't rebuild them), so it
 // works identically whether the grid came from the idle "last results"
 // reconstruction or a live run still appending batches. Discount reads the
-// data-disc attribute ggPriceCardHTML already sets from the game's own
-// retail-vs-tracked-price discount; cards with no discount to show have no
-// attribute, which sorts as lowest and sinks them below every real deal
-// rather than bunching them at the top.
+// data-disc attribute ggPriceCardHTML already sets from whichever of
+// Retail/Key is the bigger discount off the game's own tracked price;
+// cards with no discount to show have no attribute, which sorts as lowest
+// and sinks them below every real deal rather than bunching them at the top.
 let _ggSortMode='hot';
 function _ggShowSortRow(show){
   const row=document.getElementById('ggSortRow');
