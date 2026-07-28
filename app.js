@@ -5958,12 +5958,19 @@ async function runGGDealsFetch(resumeState){
   if(_ggFetchRunning){_showGgFetchModal();return}
   if(!GG_WORKER){showToast('GG.deals worker not configured.');return;}
 
-  let eligible,total,fetched,startedAt;
+  let eligible,total,fetched,startedAt,doneGames=[];
   if(resumeState){
     const remainSet=new Set(resumeState.remaining);
     eligible=games.filter(g=>remainSet.has(String(g.steamAppId)));
     if(!eligible.length){_runClear(GG_RUN_KEY);showToast('Nothing left to resume — those games are no longer eligible.');return;}
     total=resumeState.total;fetched=resumeState.fetched;startedAt=resumeState.startedAt;
+    // Games already fetched earlier in this same run, before the interruption —
+    // re-render their cards from ggPriceCache so resuming doesn't wipe them
+    // from view (they were already committed to the sheet, just not re-shown).
+    if(Array.isArray(resumeState.all)){
+      doneGames=resumeState.all.filter(id=>!remainSet.has(id))
+        .map(id=>games.find(g=>String(g.steamAppId)===id)).filter(Boolean);
+    }
   }else{
     eligible=_ggEligibleGames();
     if(!eligible.length){showToast('All released wishlist games already have prices.');return;}
@@ -5972,7 +5979,8 @@ async function runGGDealsFetch(resumeState){
 
   const batches=[];
   for(let i=0;i<eligible.length;i+=100)batches.push(eligible.slice(i,i+100));
-  _runSave(GG_RUN_KEY,{remaining:eligible.map(g=>String(g.steamAppId)),total,fetched,startedAt});
+  const allIds=resumeState&&Array.isArray(resumeState.all)?resumeState.all:eligible.map(g=>String(g.steamAppId));
+  _runSave(GG_RUN_KEY,{remaining:eligible.map(g=>String(g.steamAppId)),total,fetched,startedAt,all:allIds});
   _ggFetchCancelled=false;
   _ggFetchHidden=false;
   _ggFetchRunning=true;
@@ -6004,7 +6012,15 @@ async function runGGDealsFetch(resumeState){
   document.getElementById('ggFetchConfirmContinue').onclick=()=>_hideGgConfirm();
   document.getElementById('ggFetchConfirmStop').onclick=()=>{_ggFetchCancelled=true;_hideGgConfirm();};
   metaEl.textContent='';
-  gridEl.innerHTML='';
+  gridEl.innerHTML=doneGames.map(g=>{
+    const c=ggPriceCache[g.steamAppId];
+    return c?ggPriceCardHTML({
+      title:g.title,retail:c.retail,keyshop:c.keyshop,
+      oldRetail:NaN,oldKeyshop:NaN,
+      lowRetail:c.lowRetail,lowKeyshop:c.lowKeyshop,
+      appid:g.steamAppId,price:g.price,
+    }):ggPriceErrCardHTML(g.title,g.steamAppId);
+  }).join('');
   _ggShowFilterRow(true);
   _ggSetCardFilter('all');
   _ggShowSortRow(true);
@@ -6069,7 +6085,7 @@ async function runGGDealsFetch(resumeState){
       });
       fetched+=batch.length;
       if(SHEET_URL){rateUsed+=batch.length;_ggRenderRateInfo(rateUsed,rateBudget.resetAt);}
-      _runSave(GG_RUN_KEY,{remaining:batches.slice(b+1).flat().map(g=>String(g.steamAppId)),total,fetched,startedAt});
+      _runSave(GG_RUN_KEY,{remaining:batches.slice(b+1).flat().map(g=>String(g.steamAppId)),total,fetched,startedAt,all:allIds});
       dispatchRender();
       setProgress(`Batch ${b+1} of ${batches.length} done.`);
       gridEl.insertAdjacentHTML('beforeend',cardsHtml.join(''));
