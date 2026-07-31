@@ -3694,6 +3694,7 @@ function clearModal(){
   if(fcd){const n=new Date();fcd.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`}
   const fcp=document.getElementById('fColPlayStatus');if(fcp){fcp.value='Unplayed';_syncModalPsBtn('Unplayed');}
   document.getElementById('modalColSection').style.display='none';
+  _modalSteamWishlist=false;
 }
 let _addPickOpen=false;
 function openAdd(){
@@ -3741,7 +3742,7 @@ function openAddCollection(){
     if(fcd){const n=new Date();fcd.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`}
     _syncModalColDlcVisibility();
   }
-  const swRow=document.getElementById('steamWishlistRow');if(swRow)swRow.style.display='none';
+  _syncSteamWishlistRowVisibility();
   _modalAddType='collection';
   const mnSec=document.getElementById('modalNotesSection');if(mnSec)mnSec.style.display='';
   _pushModalHistory();
@@ -3788,11 +3789,30 @@ function _setModalColPlat(plat){
     if(lbl)lbl.value='';
     if(inp)inp.value='';
   }
+  _syncSteamWishlistRowVisibility();
 }
 function _syncSteamWishlistBtn(){
   const btn=document.getElementById('steamWishlistToggle');if(!btn)return;
   btn.classList.toggle('accent',_modalSteamWishlist);
   btn.textContent=_modalSteamWishlist?'★ Also want on Steam':'☆ Also want on Steam';
+}
+// The "Also want on Steam" toggle only makes sense while the collection
+// section is open on a non-Steam platform and the game has no Steam
+// purchase yet — re-checked on every platform pill change (add or edit) so
+// it doesn't just show up once for edits, per the request that spawned this.
+function _syncSteamWishlistRowVisibility(){
+  const swRow=document.getElementById('steamWishlistRow');if(!swRow)return;
+  const colSec=document.getElementById('modalColSection');
+  const colShown=colSec&&colSec.style.display!=='none';
+  let hasSteam=false;
+  if(editId){
+    const g=games.find(x=>x.id===editId);
+    if(g)hasSteam=gamePurchases(g).some(p=>p.platform==='Steam');
+  }
+  const show=colShown&&_modalColPlat!=='Steam'&&!hasSteam;
+  swRow.style.display=show?'':'none';
+  if(!show&&_modalSteamWishlist){_modalSteamWishlist=false;}
+  _syncSteamWishlistBtn();
 }
 function openEditFromCard(id){
   if(document.getElementById('panel').classList.contains('on')){
@@ -3841,14 +3861,7 @@ function openEdit(id){
   else if(g.steamAppId)tryAutoFillCover(g.steamAppId);
   cGenres=[...(g.genres||[])];cTags=[...(g.tags||[])];
   renderGenres();renderTags();
-  // steamWishlist toggle — show only for bought games with no Steam purchase
-  const swRow=document.getElementById('steamWishlistRow');
-  if(swRow){
-    const hasSteam=gamePurchases(g).some(p=>p.platform==='Steam');
-    swRow.style.display=(g.status==='bought'&&!hasSteam)?'':'none';
-    _modalSteamWishlist=!!g.steamWishlist;
-    _syncSteamWishlistBtn();
-  }
+  _modalSteamWishlist=!!g.steamWishlist;
   // Load existing notes into modal note list
   const _editG=games.find(x=>x.id===editId);
   _modalNotes=_editG?(Array.isArray(_editG.notes)?[..._editG.notes]:(_editG.notes?[{id:nid(),date:todayStr(),text:_editG.notes}]:[])):[];
@@ -3875,6 +3888,7 @@ function openEdit(id){
     const fcp=document.getElementById('fColPlayStatus');if(fcp){fcp.value=psVal;_syncModalPsBtn(psVal);}
     cModalCol=[...(p0.steamCollection||g.steamCollection||[])];renderModalCol();
   }
+  _syncSteamWishlistRowVisibility();
   // Notes section — only shown when editing
   const mnSec=document.getElementById('modalNotesSection');
   const mnList=document.getElementById('fNoteList');
@@ -4084,6 +4098,7 @@ document.getElementById('msave').onclick=()=>{
       const _nPlayStatus=document.getElementById('fColPlayStatus').value||'Unplayed';
       newGame.purchases=[{platform:_modalColPlat,store:_nStore,cost:_nCost,purchaseDate:_nDate,playStatus:_nPlayStatus,steamCollection:_modalColPlat==='Steam'?[...cModalCol]:[]}];
       syncLegacyFromPurchases(newGame);
+      newGame.steamWishlist=_modalSteamWishlist;
     }
     // Attach modal note if any
     newGame.notes=[..._modalNotes];
