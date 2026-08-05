@@ -914,6 +914,7 @@ let af='all',vm='grid',openId=null,editId=null,rmId=null,riId=null,wlovId=null;
 let appMode='wishlist'; // 'wishlist' | 'collection'
 let cfPlayStatus=new Set(),cfSteamCol=new Set(),cfSteamColLogic='or';
 let hrMinVal=0,hrMaxVal=100;
+let priceTrackVal='any'; // 'any' | 'tracked' | 'untracked'
 
 let cGenres=[],cTags=[],cStars=0;
 let fGenres=new Set(),fTags=new Set(),fPrios=new Set();
@@ -1263,6 +1264,11 @@ function filtered(){
       const p=g.priority||'medium';
       if(!fPrios.has(p))return false;
     }
+    if(priceTrackVal!=='any'){
+      const tr=isPriceTracked(g);
+      if(priceTrackVal==='tracked'&&!tr)return false;
+      if(priceTrackVal==='untracked'&&tr)return false;
+    }
     return true;
   });
 }
@@ -1406,9 +1412,17 @@ function metaTipHTML(name){
 // panel's Live Price section, so both always stay in sync. Eligibility:
 // wishlist games, plus bought games still wanted on Steam (same as the
 // live-price fetch job itself). Returns null when there's nothing to show.
+// Eligible for GG.deals price tracking (wishlist games, plus bought games
+// still wanted on Steam) regardless of whether the user opted out via
+// skipGGFetch — isPriceTracked() below additionally requires that.
+function isPriceTrackEligible(g){
+  return(g.status==='wishlist'||(g.status==='bought'&&g.steamWishlist))&&!!g.steamAppId;
+}
+function isPriceTracked(g){
+  return isPriceTrackEligible(g)&&!g.skipGGFetch;
+}
 function ggPriceTags(g){
-  const tracked=(g.status==='wishlist'||(g.status==='bought'&&g.steamWishlist))&&g.steamAppId;
-  if(!tracked)return null;
+  if(!isPriceTrackEligible(g))return null;
   if(g.skipGGFetch)return{notrack:true};
   const gp=ggPriceCache[g.steamAppId];
   if(!gp)return null;
@@ -4180,6 +4194,7 @@ function saveHash(){
     if(fPrios.size)p.set('pr',[...fPrios].join('|'));
     if(hrMinVal>0)p.set('hmin',hrMinVal);
     if(hrMaxVal<100)p.set('hmax',hrMaxVal);
+    if(priceTrackVal!=='any')p.set('trk',priceTrackVal);
   }
   const h=p.toString();
   history.replaceState(null,'',h?('#'+h):(location.pathname+location.search));
@@ -4211,6 +4226,8 @@ function restoreFromHash(){
     if(p.has('hmin'))hrMinVal=Math.max(0,Math.min(100,parseInt(p.get('hmin'))||0));
     if(p.has('hmax'))hrMaxVal=Math.max(0,Math.min(100,parseInt(p.get('hmax'))||100));
     document.querySelectorAll('.fbar-hot-chip').forEach(c=>c.classList.toggle('selected',parseInt(c.dataset.min)===hrMinVal&&parseInt(c.dataset.max)===hrMaxVal));
+    if(p.has('trk')){const v=p.get('trk');if(v==='tracked'||v==='untracked')priceTrackVal=v;}
+    document.querySelectorAll('.fbar-track-chip').forEach(c=>c.classList.toggle('selected',c.dataset.track===priceTrackVal));
     if(p.has('cg'))cfGenres=new Set(p.get('cg').split('|').filter(Boolean));
     if(p.has('cgl'))cfGenreLogic=p.get('cgl');
     if(p.has('cps'))cfPlayStatus=new Set(p.get('cps').split('|').filter(Boolean));
@@ -6464,6 +6481,7 @@ function _closeAllFloating(){
   wireAccordion('fbar-tags-toggle','fbar-tags-body');
   wireAccordion('fbar-prio-toggle','fbar-prio-body');
   wireAccordion('fbar-hot-toggle','fbar-hot-body');
+  wireAccordion('fbar-track-toggle','fbar-track-body');
   wireAccordion('fbar-cgenre-toggle','fbar-cgenre-body');
   wireAccordion('fbar-cplay-toggle','fbar-cplay-body');
   wireAccordion('fbar-cplat-toggle','fbar-cplat-body');
@@ -6501,6 +6519,31 @@ function _closeAllFloating(){
     chip.addEventListener('click',()=>fbarApply(parseInt(chip.dataset.min),parseInt(chip.dataset.max)));
   });
   _syncHotChips();
+
+  // ── Price Tracking chips ──
+  function fbarApplyTrack(v){
+    priceTrackVal=v;
+    _syncTrackChips();
+    renderAll();
+    syncFbarBadges();
+  }
+  function _syncTrackChips(){
+    const base=games.filter(g=>g.status!=='bought');
+    const counts={any:base.length,tracked:0,untracked:0};
+    base.forEach(g=>{
+      if(isPriceTracked(g))counts.tracked++;else counts.untracked++;
+    });
+    document.querySelectorAll('.fbar-track-chip').forEach(chip=>{
+      const v=chip.dataset.track;
+      chip.classList.toggle('selected',v===priceTrackVal);
+      const cnt=chip.querySelector('.fbar-pill-count');
+      if(cnt)cnt.textContent=counts[v];
+    });
+  }
+  document.querySelectorAll('.fbar-track-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>fbarApplyTrack(chip.dataset.track));
+  });
+  _syncTrackChips();
 
   // ── Generic list renderer ──
   function renderGenreTagList(listEl,searchEl,logicEl,getSelected,setSelected,getLogic,setLogic,getOptions,doRender){
@@ -6766,6 +6809,7 @@ function _closeAllFloating(){
     } else {
       fGenres=new Set();fTags=new Set();fPrios=new Set();
       hrMinVal=0;hrMaxVal=100;_syncHotChips();
+      priceTrackVal='any';_syncTrackChips();
       renderAll();
     }
     syncFbarBadges();
@@ -6778,6 +6822,7 @@ function _closeAllFloating(){
     else if(toggleId==='fbar-tags-toggle')refreshFbarTags();
     else if(toggleId==='fbar-prio-toggle')refreshFbarPrio();
     else if(toggleId==='fbar-hot-toggle')_syncHotChips();
+    else if(toggleId==='fbar-track-toggle')_syncTrackChips();
     else if(toggleId==='fbar-cgenre-toggle')refreshFbarCGenre();
     else if(toggleId==='fbar-cplay-toggle')refreshFbarCPlay();
     else if(toggleId==='fbar-cplat-toggle')refreshFbarCPlat();
@@ -6787,7 +6832,7 @@ function _closeAllFloating(){
   }
   function _fbarRefreshAll(){
     fbarUpdateSlider=()=>{};  // no-op: slider replaced by chips
-    ['fbar-genre-toggle','fbar-tags-toggle','fbar-prio-toggle','fbar-hot-toggle',
+    ['fbar-genre-toggle','fbar-tags-toggle','fbar-prio-toggle','fbar-hot-toggle','fbar-track-toggle',
      'fbar-cgenre-toggle','fbar-cplay-toggle','fbar-cplat-toggle','fbar-cstore-toggle','fbar-cdate-toggle','fbar-ccol-toggle'].forEach(id=>{
       const btn=document.getElementById(id);
       if(btn&&btn.classList.contains('open'))_fbarRefreshSection(id);
@@ -6812,12 +6857,14 @@ function _closeAllFloating(){
     sb('fbar-ccol-badge',cfSteamCol.size);
     const hotActive=(hrMinVal>0||hrMaxVal<100)?1:0;
     sb('fbar-hot-badge',hotActive);
+    const trackActive=priceTrackVal!=='any'?1:0;
+    sb('fbar-track-badge',trackActive);
     // Total badge
     let total;
     if(appMode==='collection'){
       total=cfGenres.size+cfPlayStatus.size+cfPlats.size+cfStores.size+cfYears.size+cfMonths.size+cfSteamCol.size;
     } else {
-      total=fGenres.size+fTags.size+fPrios.size+(hotActive?1:0);
+      total=fGenres.size+fTags.size+fPrios.size+(hotActive?1:0)+trackActive;
     }
     sb('filtersTotalBadge',total);
     sb('fbarFabBadge',total);
@@ -6837,6 +6884,7 @@ function _closeAllFloating(){
       [...fTags].forEach(v=>chips.push({label:'Tag',val:v,rm:()=>{fTags.delete(v);renderAll();syncFbarBadges();_fbarRefreshAll();}}));
       [...fPrios].forEach(v=>chips.push({label:'Priority',val:v,rm:()=>{fPrios.delete(v);renderAll();syncFbarBadges();_fbarRefreshAll();}}));
       if(hrMinVal>0||hrMaxVal<100)chips.push({label:'Hotness',val:`${hrMinVal}–${hrMaxVal}`,rm:()=>{fbarApply(0,100);}});
+      if(priceTrackVal!=='any')chips.push({label:'Price Tracking',val:priceTrackVal==='tracked'?'Tracked':'Not Tracked',rm:()=>{fbarApplyTrack('any');}});
     } else {
       [...cfGenres].forEach(v=>chips.push({label:'Genre',val:v,rm:()=>{cfGenres.delete(v);renderCollection();syncFbarBadges();_fbarRefreshAll();}}));
       [...cfPlayStatus].forEach(v=>chips.push({label:'Status',val:v,rm:()=>{cfPlayStatus.delete(v);renderCollection();syncFbarBadges();_fbarRefreshAll();}}));
