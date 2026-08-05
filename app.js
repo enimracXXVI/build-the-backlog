@@ -6528,7 +6528,10 @@ function _closeAllFloating(){
     syncFbarBadges();
   }
   function _syncTrackChips(){
-    const base=games.filter(g=>g.status!=='bought');
+    // Matches filtered()'s wishlist-tab pool: bought games only count here
+    // when steamWishlist is set, since isPriceTracked() considers those
+    // eligible too (still wanted on Steam).
+    const base=games.filter(g=>g.status!=='bought'||g.steamWishlist);
     const counts={any:base.length,tracked:0,untracked:0};
     base.forEach(g=>{
       if(isPriceTracked(g))counts.tracked++;else counts.untracked++;
