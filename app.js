@@ -4721,7 +4721,35 @@ document.addEventListener('keydown',function(e){
   function plcLog(msg,cls){
     const d=document.createElement('div');d.className=cls||'';d.textContent=msg;
     log.appendChild(d);log.scrollTop=log.scrollHeight;
+    _plcUpdateFilterUI();
   }
+  // "Updated" filter over the log — lets the user quickly hide games that
+  // got no update this run (delisted, not-live-yet, or failed lookups),
+  // same fbar-pill component as the Live Prices modal's All/Down/Up filter.
+  function _plcSetFilter(filter){
+    log.dataset.filter=filter;
+    document.querySelectorAll('#plcFilterRow .fbar-pill').forEach(b=>{
+      b.classList.toggle('selected',b.dataset.filter===filter);
+    });
+    _plcUpdateFilterUI();
+  }
+  function _plcUpdateFilterUI(){
+    const entries=[...log.children];
+    const updatedCount=entries.filter(e=>e.classList.contains('plc-ok')).length;
+    const allCountEl=document.getElementById('plcFilterCountAll');
+    const updCountEl=document.getElementById('plcFilterCountUpdated');
+    if(allCountEl)allCountEl.textContent=entries.length;
+    if(updCountEl)updCountEl.textContent=updatedCount;
+    const emptyEl=document.getElementById('plcFilterEmpty');
+    if(!emptyEl)return;
+    if(!entries.length){emptyEl.style.display='none';return;}
+    const filter=log.dataset.filter||'all';
+    const matchCount=filter==='updated'?updatedCount:entries.length;
+    emptyEl.style.display=matchCount?'none':'';
+  }
+  document.querySelectorAll('#plcFilterRow .fbar-pill').forEach(btn=>{
+    btn.onclick=()=>_plcSetFilter(btn.dataset.filter);
+  });
   async function run(){
     if(_plcRunning){ov.classList.add('on');return}
     if(OFFLINE){showToast('Offline — cannot reach Steam.');return}
@@ -4729,9 +4757,12 @@ document.addEventListener('keydown',function(e){
     if(!targets.length){showToast('No released Steam games without a price found.');return}
     ov.classList.add('on');history.pushState({plcovOpen:true},'','');
     log.innerHTML='';summary.textContent=`Checking ${targets.length} game${targets.length>1?'s':''}…`;
+    const filterRow=document.getElementById('plcFilterRow');
+    if(filterRow)filterRow.style.display='';
+    _plcSetFilter('all');
     _plcRunning=true;_plcAborted=false;closeBtn.textContent='Cancel';
     setMenuRunning(['hmSteamPriceBtn','dhSteamPriceBtn'],true);
-    let found=0,unavailable=0,failed=0;
+    let found=0,unavailable=0,failed=0,pending=0;
     for(let i=0;i<targets.length;i++){
       if(_plcAborted)break;
       const g=targets[i];summary.textContent=`${i+1}/${targets.length} — ${g.title}`;
@@ -4748,6 +4779,13 @@ document.addEventListener('keydown',function(e){
         }else if(d.is_free){
           const gg=games.find(x=>x.id===g.id);if(gg){gg.price='0.00';save(gg.id);}
           plcLog(`✔ ${g.title}  free-to-play`,'plc-ok');found++;
+        }else if(d.release_date&&d.release_date.coming_soon){
+          // Steam's own release_date.coming_soon still true — the game's
+          // release-date string can already read as "today" (or earlier)
+          // while the actual unlock hasn't happened yet (e.g. checked 9am,
+          // releases 6pm). Leave price/delisted untouched so it's picked up
+          // by the next run instead of getting stuck as delisted forever.
+          plcLog(`… ${g.title}  not live yet — will retry later`,'plc-skip');pending++;
         }else{
           const gg=games.find(x=>x.id===g.id);if(gg){gg.delisted=true;save(gg.id);}
           plcLog(`— ${g.title}  delisted · no price available`,'plc-skip');unavailable++;
@@ -4757,8 +4795,9 @@ document.addEventListener('keydown',function(e){
     }
     _plcRunning=false;closeBtn.textContent='Close';
     setMenuRunning(['hmSteamPriceBtn','dhSteamPriceBtn'],false);
-    if(_plcAborted){summary.textContent=`Stopped — ${found} found, ${unavailable} delisted${failed?`, ${failed} failed`:''}`;}
-    else{summary.textContent=`Done — ${found} found, ${unavailable} delisted${failed?`, ${failed} failed`:''}`;}
+    const tail=`${unavailable} delisted${pending?`, ${pending} not live yet`:''}${failed?`, ${failed} failed`:''}`;
+    if(_plcAborted){summary.textContent=`Stopped — ${found} found, ${tail}`;}
+    else{summary.textContent=`Done — ${found} found, ${tail}`;}
     if(found)dispatchRender();
   }
   window.runPriceLookup=run;

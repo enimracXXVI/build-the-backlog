@@ -611,6 +611,7 @@ button{text-transform:none;letter-spacing:0}
 #plcLog .plc-ok{color:var(--green)}
 #plcLog .plc-skip{color:var(--t3)}
 #plcLog .plc-err{color:var(--pink)}
+#plcLog[data-filter="updated"] > div:not(.plc-ok){display:none}
 /* Next Up picker — slot-machine reveal over the real .gc/.cc card markup,
    so the landed card is pixel-identical to a collection grid card. */
 .nu-body{text-align:center}

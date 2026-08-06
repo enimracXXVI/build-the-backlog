@@ -364,6 +364,11 @@
     <div class="modal-body">
     <div class="mt" style="color:var(--blue)">$ Check Prices</div>
     <div id="plcSummary" style="font-size:.82rem;color:var(--t2);margin-bottom:.7rem;min-height:1.1em"></div>
+    <div class="ggr-filter-row" id="plcFilterRow" style="display:none">
+      <button type="button" class="fbar-pill selected" data-filter="all" style="background:#02b3fc;color:#031329">All<span class="fbar-pill-count fpc-dark" id="plcFilterCountAll">0</span></button>
+      <button type="button" class="fbar-pill" data-filter="updated" style="background:#9cff00;color:#031329">Updated<span class="fbar-pill-count fpc-dark" id="plcFilterCountUpdated">0</span></button>
+    </div>
+    <div class="ggr-empty" id="plcFilterEmpty" style="display:none">No games matched this filter.</div>
     <div id="plcLog"></div>
     </div>
     <div class="ma">
