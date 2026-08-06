@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pill / Badge / Chip / Stat — Complete Reference</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+.audit-wrap{max-width:1280px;margin:0 auto;padding:2rem 1.2rem 6rem;font-family:'Inter',sans-serif}
+.audit-h1{font-family:'Rajdhani',sans-serif;font-size:1.9rem;font-weight:700;color:var(--text);margin-bottom:.3rem}
+.audit-sub{color:var(--t2);font-size:.9rem;margin-bottom:1.4rem;max-width:880px;line-height:1.5}
+.audit-toc{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:2rem;font-size:.75rem}
+.audit-toc a{color:var(--blue);border:1px solid var(--bd2);border-radius:99px;padding:.25rem .65rem}
+.audit-note{font-size:.72rem;color:var(--amber);background:#f7cd2610;border:1px solid #f7cd2640;border-radius:6px;padding:.5rem .8rem;margin-bottom:2rem}
+
+.type-sec{margin-bottom:3rem}
+.type-hdr{display:flex;align-items:baseline;gap:.8rem;border-bottom:2px solid var(--bd2);padding-bottom:.5rem;margin-bottom:.8rem}
+.type-hdr h2{font-family:'Rajdhani',sans-serif;font-size:1.7rem;font-weight:700;color:var(--text)}
+.type-hdr .type-shape{width:38px;height:20px;border-width:2px;border-style:solid;flex-shrink:0}
+.type-desc{color:var(--t2);font-size:.85rem;line-height:1.6;max-width:900px;margin-bottom:1rem}
+.type-diff{background:var(--s1);border:1px solid var(--bd2);border-radius:var(--r);padding:.8rem 1rem;margin-bottom:1.2rem;font-size:.8rem;color:var(--t2);line-height:1.6}
+.type-diff b{color:var(--text)}
+.type-where{font-size:.78rem;color:var(--t3);margin-bottom:1.6rem}
+
+.subcat{background:var(--s1);border:1px solid var(--bd2);border-radius:var(--rl);padding:1.1rem 1.3rem;margin-bottom:1.4rem}
+.subcat-title{font-family:'Rajdhani',sans-serif;font-size:1.15rem;font-weight:700;color:var(--blue);margin-bottom:.25rem}
+.subcat-why{font-size:.78rem;color:var(--t2);line-height:1.55;margin-bottom:1rem}
+.subcat-why b{color:var(--text)}
+.no-subcat{font-size:.78rem;color:var(--t3);font-style:italic;margin-bottom:1rem}
+
+/* shared-states block (once per subcategory) */
+.states-block{background:#02b3fc0a;border:1px solid var(--bd2);border-radius:var(--r);padding:.8rem .9rem;margin-bottom:1rem}
+.states-hdr{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;color:var(--blue);margin-bottom:.15rem}
+.states-note{font-size:.7rem;color:var(--t2);margin-bottom:.6rem;line-height:1.5}
+.states-note code{color:var(--amber)}
+
+/* per-element block */
+.el-block{background:var(--base);border:1px solid var(--bd);border-radius:var(--r);padding:.8rem .9rem;margin-bottom:1rem}
+.el-block:last-child{margin-bottom:0}
+.el-hdr{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.15rem}
+.el-hdr-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.92rem;color:var(--text)}
+.el-hdr-class{font-family:monospace;font-size:.68rem;color:var(--t3)}
+.el-hdr-usage{font-size:.7rem;color:var(--t2);margin-bottom:.6rem;line-height:1.5}
+
+.v-table{width:100%;border-collapse:collapse;font-size:.74rem}
+.v-table th{text-align:left;color:var(--t3);font-family:'Rajdhani',sans-serif;font-size:.62rem;letter-spacing:.05em;
+  text-transform:uppercase;padding:.3rem .5rem;border-bottom:1px solid var(--bd)}
+.v-table td{padding:.4rem .5rem;border-bottom:1px solid var(--bd);color:var(--text);vertical-align:middle}
+.v-table tr:last-child td{border-bottom:none}
+.v-name{font-weight:600;white-space:nowrap}
+.v-preview{min-width:110px}
+
+/* hex copy button */
+.hexcopy{font-family:monospace;font-size:.72rem;color:var(--text);background:var(--s1);border:1px solid var(--bd);
+  border-radius:4px;padding:2px 7px;cursor:pointer;transition:all .12s;white-space:nowrap;display:inline-block}
+.hexcopy:hover{border-color:var(--blue);color:var(--blue)}
+.hexcopy.copied{border-color:var(--green);color:var(--green);background:#9cff0015}
+.hexdash{color:var(--t3);font-family:monospace;font-size:.72rem}
+.varname{font-family:monospace;font-size:.68rem;color:var(--t3)}
+.v-note{font-size:.68rem;color:var(--t2);line-height:1.4}
+
+.on-cover{background:linear-gradient(135deg,#0a2a4a,#1a0a3a 55%,#031329);border-radius:6px;padding:.3rem .4rem;display:inline-block}
+</style>
+</head>
+<body style="overflow:auto;height:auto;display:block">
+<div class="audit-wrap">
+  <h1 class="audit-h1">Pill / Badge / Chip / Stat — Complete Reference</h1>
+  <p class="audit-sub">Every option of every pill/badge/chip/stat in the app — not just examples. Click any hex code to copy it. "CSS Variable" is blank where the code hardcodes a literal hex instead of referencing a shared variable. Rendered with the app's real <code>style.css</code>.</p>
+
+  <div class="audit-note">Calendar components (day-count bubble, TBA list rows) are intentionally excluded — not yet reviewed.</div>
+
+  <div class="audit-toc"><a href="#pill">Pill</a><a href="#badge">Badge</a><a href="#chip">Chip</a><a href="#stat">Stat</a></div>
+
+  <!-- ══════════════════════ PILL ══════════════════════ -->
+  <div class="type-sec" id="pill">
+    <div class="type-hdr"><span class="type-shape" style="border-radius:20px;border-color:var(--blue)"></span><h2>Pill</h2></div>
+    <p class="type-desc">A control for choosing among a set of options — you click it to pick/toggle a value, either on a single item (a modal picker) or across your whole collection (a sidebar filter).</p>
+    <div class="type-diff"><b>How it differs from Badge/Chip/Stat:</b> 20px radius, 1.5px border, interactive (click to toggle), font 700/.04em/uppercase/Rajdhani, padding .25rem .65rem. Unlike Badge (no border, never interactive) and Chip (99px radius, has its own remove/action button rather than being one of several options), a Pill is always part of a group of mutually-relevant choices.</div>
+    <div class="type-where">Used in: Add/Edit modal, Add-to-Collection modal, sidebar filters, purchase editor (side panel).</div>
+
+    <div class="subcat">
+      <div class="subcat-title">Selector Pill</div>
+      <div class="subcat-why"><b>Purpose:</b> assign a value to <b>one</b> item. <b>Why its own subcategory:</b> stays colorless (transparent background, muted border) until you pick a value — no count, since it's not summarizing anything across the collection.</div>
+
+      <div class="states-block">
+        <div class="states-hdr">States (shared by every Selector Pill below)</div>
+        <div class="states-note">Every Selector Pill uses the same unselected/hover treatment — only the "Selected" color differs per element/value, already shown in each table below. Exception: <code>.ps-modal-btn</code> (Play status) has no unselected look at all — it always shows a filled value — and its hover is a brightness filter instead of a border/text change.</div>
+        <table class="v-table">
+          <tr><th>State</th><th>Preview</th><th>Background</th><th>Border</th><th>Text</th></tr>
+          <tr><td class="v-name">Unselected</td><td class="v-preview"><button class="prio-btn">High</button></td>
+            <td><span class="hexdash">transparent</span></td><td class="varname">var(--bd)</td><td class="varname">var(--t2)</td></tr>
+          <tr><td class="v-name">Hover</td><td class="v-preview"><button class="prio-btn" style="border-color:#02b3fc;color:#e8f4ff">High</button></td>
+            <td><span class="hexdash">transparent</span></td><td class="varname">var(--blue)</td><td class="varname">var(--text)</td></tr>
+          <tr><td class="v-name">Selected</td><td class="v-preview"><button class="prio-btn prio-btn-on" style="background:#02b3fc;border-color:transparent;color:#031329">High</button></td>
+            <td class="v-note" colspan="3">Fill color varies per value — see each element's table below</td></tr>
+        </table>
+      </div>
+
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Priority</span><span class="el-hdr-class">.prio-btn</span></div>
+        <div class="el-hdr-usage">Add/Edit modal — sets a game's priority</div>
+        <table class="v-table">
+          <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+          <tr><td class="v-name">High</td><td class="v-preview"><button class="prio-btn prio-btn-on" style="background:#02b3fc;border-color:transparent;color:#031329">High</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc')">#02b3fc</span></td><td class="varname">var(--cyan)</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Medium</td><td class="v-preview"><button class="prio-btn prio-btn-on" style="background:#ff00aa;border-color:transparent;color:#031329">Medium</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#ff00aa')">#ff00aa</span></td><td class="varname">var(--magenta)</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Low</td><td class="v-preview"><button class="prio-btn prio-btn-on" style="background:#9cff00;border-color:transparent;color:#031329">Low</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#9cff00')">#9cff00</span></td><td class="varname">var(--lime)</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+        </table>
+      </div>
+
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Type</span><span class="el-hdr-class">.type-btn</span></div>
+        <div class="el-hdr-usage">Add/Edit modal — is this a base game or DLC. Note: unlike every other Selector Pill, the selected color here is applied via hardcoded ID selectors (<code>#fTypeGame.on</code> / <code>#fTypeDlc.on</code>) instead of a reusable class/attribute pattern — works correctly in the live app (the real buttons have those exact IDs) but is a code-consistency outlier worth knowing about.</div>
+        <table class="v-table">
+          <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+          <tr><td class="v-name">Game</td><td class="v-preview"><button class="type-btn on" style="background:#02b3fc;border-color:transparent;color:#031329">Game</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc')">#02b3fc</span></td><td class="varname">var(--blue)</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">DLC</td><td class="v-preview"><button class="type-btn on" style="background:#c4a0ff;color:#1a0a3a">DLC</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#c4a0ff')">#c4a0ff</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#1a0a3a')">#1a0a3a</span></td><td class="varname">—</td></tr>
+        </table>
+      </div>
+
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Live prices (fetch)</span><span class="el-hdr-class">.fetch-btn</span></div>
+        <div class="el-hdr-usage">Add/Edit modal — opt this game in/out of the gg.deals price-fetch job</div>
+        <table class="v-table">
+          <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+          <tr><td class="v-name">Include</td><td class="v-preview"><button class="fetch-btn inc on">Include</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#9cff00')">#9cff00</span></td><td class="varname">var(--green)</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Skip</td><td class="v-preview"><button class="fetch-btn skip on" style="background:#ff00aa;color:#031329">Skip</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#ff00aa')">#ff00aa</span></td><td class="varname">var(--pink)</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+        </table>
+      </div>
+
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Unreleased (TBA)</span><span class="el-hdr-class">.tba-btn</span></div>
+        <div class="el-hdr-usage">Add/Edit modal — marks release date as TBA</div>
+        <table class="v-table">
+          <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+          <tr><td class="v-name">On</td><td class="v-preview"><button class="tba-btn on">Unreleased</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc')">#02b3fc</span></td><td class="varname">var(--blue)</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+        </table>
+      </div>
+
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Platform</span><span class="el-hdr-class">.btc-plat-pill</span></div>
+        <div class="el-hdr-usage">Add-to-Collection modal — which platform this purchase is on</div>
+        <table class="v-table">
+          <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+          <tr><td class="v-name">Steam</td><td class="v-preview"><button class="btc-plat-pill" style="background:#66c0f4;color:#031329;border-color:transparent">Steam</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#66c0f4')">#66c0f4</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Epic Games</td><td class="v-preview"><button class="btc-plat-pill" style="background:#101014;color:#fff;border-color:transparent">Epic Games</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#101014')">#101014</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">GOG</td><td class="v-preview"><button class="btc-plat-pill" style="background:#9b4dca;color:#fff;border-color:transparent">GOG</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#9b4dca')">#9b4dca</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Other PC</td><td class="v-preview"><button class="btc-plat-pill" style="background:#555555;color:#031329;border-color:transparent">Other PC</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#555555')">#555555</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">PS</td><td class="v-preview"><button class="btc-plat-pill" style="background:#003791;color:#fff;border-color:transparent">PS</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#003791')">#003791</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Xbox</td><td class="v-preview"><button class="btc-plat-pill" style="background:#107c10;color:#fff;border-color:transparent">Xbox</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#107c10')">#107c10</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Nintendo</td><td class="v-preview"><button class="btc-plat-pill" style="background:#e4000f;color:#fff;border-color:transparent">Nintendo</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#e4000f')">#e4000f</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span></td><td class="varname">—</td></tr>
+        </table>
+      </div>
+
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Play status</span><span class="el-hdr-class">.ps-modal-btn + .ps-XX</span></div>
+        <div class="el-hdr-usage">Add-to-Collection modal — current value shown; click opens a picker list</div>
+        <table class="v-table">
+          <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+          <tr><td class="v-name">Unplayed</td><td class="v-preview"><button class="ps-modal-btn ps-UP">Unplayed</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#2a2a2a')">#2a2a2a</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#888888')">#888888</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">In Progress</td><td class="v-preview"><button class="ps-modal-btn ps-IP">In Progress</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#0a2a4a')">#0a2a4a</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#4ab0f5')">#4ab0f5</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Completed</td><td class="v-preview"><button class="ps-modal-btn ps-COM">Completed</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#0a3320')">#0a3320</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#5ddb8e')">#5ddb8e</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Superseded</td><td class="v-preview"><button class="ps-modal-btn ps-SUP">Superseded</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#3a2e00')">#3a2e00</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#f0c040')">#f0c040</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Unfinishable</td><td class="v-preview"><button class="ps-modal-btn ps-UF">Unfinishable</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#3a1a00')">#3a1a00</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#f08030')">#f08030</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Played on Different Platform</td><td class="v-preview"><button class="ps-modal-btn ps-PDP">Played Elsewhere</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#2a0a4a')">#2a0a4a</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#c4a0ff')">#c4a0ff</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Will Never Complete</td><td class="v-preview"><button class="ps-modal-btn ps-WNC">Will Never Complete</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#3a0a0a')">#3a0a0a</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#f08080')">#f08080</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Will Never Play</td><td class="v-preview"><button class="ps-modal-btn ps-WNP">Will Never Play</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#3a0a0a')">#3a0a0a</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#f08080')">#f08080</span></td><td class="varname">—</td></tr>
+        </table>
+      </div>
+
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Platform tab</span><span class="el-hdr-class">.plat-tab</span></div>
+        <div class="el-hdr-usage">Side panel — purchase editor, switches which platform's purchase record is shown. Same 7 colors as the Platform pill above.</div>
+        <table class="v-table">
+          <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+          <tr><td class="v-name">Steam</td><td class="v-preview"><button class="plat-tab active" style="background:#66c0f4;color:#031329;border-color:transparent">Steam</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#66c0f4')">#66c0f4</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">(all others)</td><td class="v-preview"><button class="plat-tab active" style="background:#e4000f;color:#fff;border-color:transparent">Nintendo</button></td>
+            <td colspan="4" class="v-note">Same values as the 7 platform colors listed under "Platform" above</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Filter Pill</div>
+      <div class="subcat-why"><b>Purpose:</b> filter your <b>whole collection</b> by a value. <b>Why its own subcategory:</b> stays tinted with its color at all times (dims to 55% opacity when not selected, rather than going transparent) so you can scan the full palette of options at a glance, and always shows a live count of how many games match — the count sits in its own small contrasting sub-chip so it stays legible regardless of the pill's own color.</div>
+
+      <div class="states-block">
+        <div class="states-hdr">States (shared by every Filter Pill below, no exceptions)</div>
+        <div class="states-note">A Filter Pill's own color never changes between states — only its opacity does. All four elements below (Priority/Platform/Play status/Hotness filters) use the exact same opacity values.</div>
+        <table class="v-table">
+          <tr><th>State</th><th>Preview</th><th>Opacity</th></tr>
+          <tr><td class="v-name">Unselected</td><td class="v-preview"><button class="b-plat fbar-pill" style="background:#02b3fc;color:#031329">High<span class="fbar-pill-count fpc-dark">12</span></button></td><td class="varname">.55</td></tr>
+          <tr><td class="v-name">Hover</td><td class="v-preview"><button class="b-plat fbar-pill" style="background:#02b3fc;color:#031329;opacity:.8">High<span class="fbar-pill-count fpc-dark">12</span></button></td><td class="varname">.8</td></tr>
+          <tr><td class="v-name">Selected</td><td class="v-preview"><button class="b-plat fbar-pill selected" style="background:#02b3fc;color:#031329">High<span class="fbar-pill-count fpc-dark">12</span></button></td><td class="varname">1</td></tr>
+        </table>
+      </div>
+
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Priority filter</span><span class="el-hdr-class">.b-plat.fbar-pill</span></div>
+        <div class="el-hdr-usage">Sidebar — Wishlist mode, filters by priority. Same 3 colors as the Priority selector pill.</div>
+        <table class="v-table">
+          <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+          <tr><td class="v-name">High</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><button class="b-plat fbar-pill selected" style="background:#02b3fc;color:#031329">High<span class="fbar-pill-count fpc-dark">12</span></button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc')">#02b3fc</span></td><td class="varname">var(--cyan)</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+        </table>
+      </div>
+
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Platform filter</span><span class="el-hdr-class">.b-plat.fbar-pill</span></div>
+        <div class="el-hdr-usage">Sidebar — Collection mode, filters by owned platform. Same 7 colors as the Platform selector pill.</div>
+        <table class="v-table">
+          <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+          <tr><td class="v-name">Steam</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><button class="b-plat fbar-pill selected" style="background:#66c0f4;color:#031329">Steam<span class="fbar-pill-count fpc-dark">41</span></button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#66c0f4')">#66c0f4</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+        </table>
+      </div>
+
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Play status filter</span><span class="el-hdr-class">.col-ps-badge.fbar-pill</span></div>
+        <div class="el-hdr-usage">Sidebar — Collection mode, filters by play status. Same 8 colors as the Play status selector pill.</div>
+        <table class="v-table">
+          <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+          <tr><td class="v-name">In Progress</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><button class="fbar-pill selected" style="background:#0a2a4a;color:#4ab0f5">In Progress<span class="fbar-pill-count fpc-light">6</span></button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#0a2a4a')">#0a2a4a</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#4ab0f5')">#4ab0f5</span></td><td class="varname">—</td></tr>
+        </table>
+      </div>
+
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Hotness tier filter</span><span class="el-hdr-class">.fbar-pill.fbar-hot-chip</span></div>
+        <div class="el-hdr-usage">Sidebar — Wishlist mode, filters by hotness range (class name kept for history; it's a filter pill, not a chip)</div>
+        <table class="v-table">
+          <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+          <tr><td class="v-name">Any</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><button class="fbar-pill selected" style="background:#f7cd26;color:#031329">Any<span class="fbar-pill-count fpc-dark">58</span></button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#f7cd26')">#f7cd26</span></td><td class="varname">—</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">70+ / 40–69 / &lt;40</td><td class="v-preview" colspan="1">(same button, different label)</td>
+            <td colspan="4" class="v-note">All 4 tiers share the exact same colors above</td></tr>
+        </table>
+      </div>
+
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Live Prices result filter</span><span class="el-hdr-class">.fbar-pill</span></div>
+        <div class="el-hdr-usage">Check-Live-Prices modal — filters the result card grid by price direction. Fixed 3-color set (not data-driven like the others above), but same component/states.</div>
+        <table class="v-table">
+          <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+          <tr><td class="v-name">All</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><button class="fbar-pill selected" style="background:#02b3fc;color:#031329">All<span class="fbar-pill-count fpc-dark">3</span></button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc')">#02b3fc</span></td><td class="varname">var(--blue)</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Down</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><button class="fbar-pill" style="background:#9cff00;color:#031329">Down<span class="fbar-pill-count fpc-dark">1</span></button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#9cff00')">#9cff00</span></td><td class="varname">var(--green)</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+          <tr><td class="v-name">Up</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><button class="fbar-pill" style="background:#ff00aa;color:#031329">Up<span class="fbar-pill-count fpc-dark">1</span></button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#ff00aa')">#ff00aa</span></td><td class="varname">var(--magenta)</td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ BADGE ══════════════════════ -->
+  <div class="type-sec" id="badge">
+    <div class="type-hdr"><span class="type-shape" style="border-radius:4px;background:var(--t3);border-color:var(--t3)"></span><h2>Badge</h2></div>
+    <p class="type-desc">A static, read-only label — displays a value or status. Nothing to click, nothing to choose.</p>
+    <div class="type-diff"><b>How it differs from Pill/Chip/Stat:</b> 4px radius, no border, always solid fill, non-interactive, font 700/.56rem/.04em/uppercase, padding 2px 6px, line-height 1.4 — identical across every badge in the app regardless of what data it shows; only its background/text color changes. Unlike Pill it's never part of a "pick one" group, and unlike Chip it has no remove button or action.</div>
+    <div class="type-where">Used on: game cards (grid + list), collection cards, side panel, purchase editor.</div>
+    <p class="no-subcat">No subcategories — every badge in the app shares the exact same shape/typography, varying only by color and text.</p>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Platform</span><span class="el-hdr-class">.b-plat</span></div>
+      <div class="el-hdr-usage">Collection card, bottom-right of cover</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">Steam</td><td class="v-preview"><span class="on-cover"><span class="b-plat" style="background:#66c0f4;color:#031329">Steam</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#66c0f4')">#66c0f4</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">Epic Games</td><td class="v-preview"><span class="on-cover"><span class="b-plat" style="background:#101014;color:#fff">Epic Games</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#101014')">#101014</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">GOG</td><td class="v-preview"><span class="on-cover"><span class="b-plat" style="background:#9b4dca;color:#fff">GOG</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#9b4dca')">#9b4dca</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">Other PC</td><td class="v-preview"><span class="on-cover"><span class="b-plat" style="background:#555555;color:#031329">Other PC</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#555555')">#555555</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">PS</td><td class="v-preview"><span class="on-cover"><span class="b-plat" style="background:#003791;color:#fff">PS</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#003791')">#003791</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">Xbox</td><td class="v-preview"><span class="on-cover"><span class="b-plat" style="background:#107c10;color:#fff">Xbox</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#107c10')">#107c10</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">Nintendo</td><td class="v-preview"><span class="on-cover"><span class="b-plat" style="background:#e4000f;color:#fff">Nintendo</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#e4000f')">#e4000f</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Hotness</span><span class="el-hdr-class">.b-hot</span></div>
+      <div class="el-hdr-usage">Wishlist card, next to the price (grid view only, hidden in list view); side panel, inline with other status badges</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">(0–100)</td><td class="v-preview"><span class="on-cover"><span class="bdg b-hot">85</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#f7cd26')">#f7cd26</span></td><td class="varname">var(--amber)</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Pre-order</span><span class="el-hdr-class">.b-pre</span></div>
+      <div class="el-hdr-usage">Side panel only — bought on another platform, future release date, wanted on Steam too</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview"><span class="on-cover"><span class="bdg b-pre">PRE-ORDER</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#f7cd26')">#f7cd26</span></td><td class="varname">var(--amber)</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">In Collection</span><span class="el-hdr-class">.b-bt</span></div>
+      <div class="el-hdr-usage">Side panel only — bought elsewhere, already released, wanted on Steam too</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview"><span class="on-cover"><span class="bdg b-bt">IN COLLECTION</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#9cff00')">#9cff00</span></td><td class="varname">var(--green)</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Removed</span><span class="el-hdr-class">.b-rm</span></div>
+      <div class="el-hdr-usage">Wishlist card top-left + side panel</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview"><span class="on-cover"><span class="bdg b-rm">Removed</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#353e46')">#353e46</span></td><td class="varname">var(--s3)</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#b3b3b3')">#b3b3b3</span></td><td class="varname">var(--muted)</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Unreleased</span><span class="el-hdr-class">.b-unrel</span></div>
+      <div class="el-hdr-usage">Side panel only — the price row and card-level display already show the release date instead</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview"><span class="on-cover"><span class="bdg b-unrel">UNRELEASED</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#f472b6')">#f472b6</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Free</span><span class="el-hdr-class">.b-free</span></div>
+      <div class="el-hdr-usage">Wishlist card price row + Collection card cost slot + side panel price field</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview"><span class="on-cover"><span class="bdg b-free">FREE</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">To Review</span><span class="el-hdr-class">.b-rev</span></div>
+      <div class="el-hdr-usage">Wishlist card top-left + side panel — no hotness rating set yet</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview"><span class="on-cover"><span class="b-rev">To Review</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#f7cd26')">#f7cd26</span></td><td class="varname">var(--amber)</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Cancelled</span><span class="el-hdr-class">.b-cancelled</span></div>
+      <div class="el-hdr-usage">Wishlist card top-left + side panel — stays full-opacity while every other badge on that card is desaturated</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview"><span class="on-cover"><span class="b-cancelled">CANCELLED</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#cc2200')">#cc2200</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Delisted</span><span class="el-hdr-class">.b-delisted</span></div>
+      <div class="el-hdr-usage">Side panel price field only</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview"><span class="on-cover"><span class="b-delisted">DELISTED</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#cc6600')">#cc6600</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Play status</span><span class="el-hdr-class">.col-ps-badge + .ps-XX</span></div>
+      <div class="el-hdr-usage">Collection card top-left · collection list rows · purchase editor (shown as "<code>UP · UNPLAYED</code>", code + full label)</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">Unplayed (UP)</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="col-ps-badge" style="background:#2a2a2a;color:#888">UP</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#2a2a2a')">#2a2a2a</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#888888')">#888888</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">In Progress (IP)</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="col-ps-badge" style="background:#0a2a4a;color:#4ab0f5">IP</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#0a2a4a')">#0a2a4a</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#4ab0f5')">#4ab0f5</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">Completed (COM)</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="col-ps-badge" style="background:#0a3320;color:#5ddb8e">COM</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#0a3320')">#0a3320</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#5ddb8e')">#5ddb8e</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">Superseded (SUP)</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="col-ps-badge" style="background:#3a2e00;color:#f0c040">SUP</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#3a2e00')">#3a2e00</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#f0c040')">#f0c040</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">Unfinishable (UF)</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="col-ps-badge" style="background:#3a1a00;color:#f08030">UF</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#3a1a00')">#3a1a00</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#f08030')">#f08030</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">Played on Different Platform (PDP)</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="col-ps-badge" style="background:#2a0a4a;color:#c4a0ff">PDP</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#2a0a4a')">#2a0a4a</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#c4a0ff')">#c4a0ff</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">Will Never Complete (WNC)</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="col-ps-badge" style="background:#3a0a0a;color:#f08080">WNC</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#3a0a0a')">#3a0a0a</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#f08080')">#f08080</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">Will Never Play (WNP)</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="col-ps-badge" style="background:#3a0a0a;color:#f08080">WNP</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#3a0a0a')">#3a0a0a</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#f08080')">#f08080</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">DLC count</span><span class="el-hdr-class">.dlc-count-badge</span></div>
+      <div class="el-hdr-usage">Collection card, next to cost — count of owned DLC for that base game</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">DLC (N)</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="dlc-count-badge">DLC (3)</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#1a0a3a')">#1a0a3a</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#c4a0ff')">#c4a0ff</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Collection type</span><span class="el-hdr-class">.col-type-badge</span></div>
+      <div class="el-hdr-usage">Collection card, top-right of cover. Same colors as Collection tag and Read-only collection tag below — same underlying data.</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="col-type-badge">Definitive Edition +1</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#1a0a3a')">#1a0a3a</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#c4a0ff')">#c4a0ff</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Collection tag</span><span class="el-hdr-class">.col-row-tag</span></div>
+      <div class="el-hdr-usage">Collection list rows — up to 3 shown per row</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="col-row-tag">Definitive Edition</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#1a0a3a')">#1a0a3a</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#c4a0ff')">#c4a0ff</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Read-only collection tag</span><span class="el-hdr-class">.cich-ro</span></div>
+      <div class="el-hdr-usage">Purchase editor, side panel — no remove action, so it's a badge not a chip</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="cich-ro">Season Pass</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#1a0a3a')">#1a0a3a</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#c4a0ff')">#c4a0ff</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Read-only game tag</span><span class="el-hdr-class">.cich-tag</span></div>
+      <div class="el-hdr-usage">Side panel — a game's genre/tag list</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="cich-tag">Metroidvania</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#0a1824')">#0a1824</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#5db8e8')">#5db8e8</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Retail price</span><span class="el-hdr-class">.ggp-retail</span></div>
+      <div class="el-hdr-usage">Wishlist card, bottom-left overlay on cover art</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview"><span class="on-cover"><span class="ggp-retail">€19.99</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'rgba(3,19,41,.6)')">rgba(3,19,41,.6)</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#e0f7ff')">#e0f7ff</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Key-shop price</span><span class="el-hdr-class">.ggp-keys</span></div>
+      <div class="el-hdr-usage">Wishlist card, bottom-right overlay on cover art</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview"><span class="on-cover"><span class="ggp-keys">🔑 €14.50</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'rgba(3,19,41,.6)')">rgba(3,19,41,.6)</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#f7cd26')">#f7cd26</span></td><td class="varname">var(--amber)</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Near/at low price</span><span class="el-hdr-class">.ggp-low</span></div>
+      <div class="el-hdr-usage">Wishlist card, bottom-center overlay — price within 10% of its historical low</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview"><span class="on-cover"><span class="ggp-low">★ Low</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#0a1a0acc')">#0a1a0acc</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#9cff00')">#9cff00</span></td><td class="varname">var(--green)</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Personal low price</span><span class="el-hdr-class">.ggp-hist-low</span></div>
+      <div class="el-hdr-usage">Wishlist card, bottom-center overlay — fires at the game's personal all-time-low price. Label text reads "★ High" — a naming quirk in the source, not a rendering bug.</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview"><span class="on-cover"><span class="ggp-hist-low">★ High</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#1a140acc')">#1a140acc</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#ffd700')">#ffd700</span></td><td class="varname">—</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Price-tracking off</span><span class="el-hdr-class">.ggp-notrack</span></div>
+      <div class="el-hdr-usage">Wishlist card, bottom-center overlay — shown instead of prices when "Skip" is set on live-price fetching</div>
+      <table class="v-table">
+        <tr><th>Value</th><th>Preview</th><th>Background</th><th>BG var</th><th>Text</th><th>Text var</th></tr>
+        <tr><td class="v-name">—</td><td class="v-preview"><span class="on-cover"><span class="ggp-notrack">€ Non Tracked</span></span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'rgba(3,19,41,.6)')">rgba(3,19,41,.6)</span></td><td class="varname">—</td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#b3b3b3')">#b3b3b3</span></td><td class="varname">var(--muted)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ CHIP ══════════════════════ -->
+  <div class="type-sec" id="chip">
+    <div class="type-hdr"><span class="type-shape" style="border-radius:99px;border-color:var(--green)"></span><h2>Chip</h2></div>
+    <p class="type-desc">A standalone item that isn't part of a "pick one of many" group — it carries its own action (remove it, or trigger something) rather than being one of several options you choose between.</p>
+    <div class="type-diff"><b>How it differs from Pill/Badge/Stat:</b> 99px radius (fully rounded capsule), 1px border, has its own action baked into the element itself (an × to remove it, or a click to trigger a retry) — unlike Pill, it's not part of a group of alternatives; unlike Badge, it's interactive.</div>
+    <div class="type-where">Used in: sidebar (active filters), Add/Edit modal (tag inputs), mobile floating status.</div>
+
+    <div class="subcat">
+      <div class="subcat-title">Filter Chip</div>
+      <div class="subcat-why"><b>Purpose:</b> represent one currently-applied filter. <b>Why its own subcategory:</b> shows a <code>Label: Value</code> pair (not just a bare value), since it needs to say <i>which</i> filter this is as well as what it's set to.</div>
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Active filter</span><span class="el-hdr-class">.fchip</span></div>
+        <div class="el-hdr-usage">Sidebar, above the filter sections — one chip per currently-active filter, click × to remove it</div>
+        <table class="v-table">
+          <tr><th>Part</th><th>Preview</th><th>Color</th><th>Var</th><th></th><th></th></tr>
+          <tr><td class="v-name">Background</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="fchip"><span class="fchip-label">Priority:</span><span class="fchip-val">High</span><button class="fchip-x">✕</button></span></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc15')">#02b3fc15</span></td><td class="varname">—</td><td></td><td></td></tr>
+          <tr><td class="v-name">Border</td><td></td><td><span class="hexdash">—</span></td><td class="varname">var(--bd2)</td><td></td><td></td></tr>
+          <tr><td class="v-name">Label text ("Priority:")</td><td></td><td><span class="hexcopy" onclick="copyHex(this,'#8aabcc')">#8aabcc</span></td><td class="varname">var(--t2)</td><td></td><td></td></tr>
+          <tr><td class="v-name">Value text ("High")</td><td></td><td><span class="hexcopy" onclick="copyHex(this,'#02b3fc')">#02b3fc</span></td><td class="varname">var(--blue)</td><td></td><td></td></tr>
+          <tr><td class="v-name">× remove, resting</td><td class="v-preview"><button class="fchip-x" style="background:transparent;border:none;color:#4a6280;font-size:.9em">✕</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#4a6280')">#4a6280</span></td><td class="varname">var(--t3)</td><td></td><td></td></tr>
+          <tr><td class="v-name">× remove, hover</td><td class="v-preview"><button class="fchip-x" style="background:transparent;border:none;color:#ff00aa;font-size:.9em">✕</button></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#ff00aa')">#ff00aa</span></td><td class="varname">var(--pink)</td><td></td><td></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Tag Chip</div>
+      <div class="subcat-why"><b>Purpose:</b> represent one value in a multi-value list you're actively editing. <b>Why its own subcategory:</b> shows a bare value (no label prefix, since the field it belongs to is already labeled above the input) — same chip grammar as the Filter Chip, just simpler content.</div>
+      <div class="states-note" style="margin-bottom:.8rem">Its × remove button shares the exact same resting/hover colors as the Filter Chip's above (<span class="varname">var(--t3)</span> → <span class="varname">var(--pink)</span>) — not repeated below.</div>
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Tag input</span><span class="el-hdr-class">.cich</span></div>
+        <div class="el-hdr-usage">Add/Edit modal — genre, developer, publisher, and collection multi-value inputs</div>
+        <table class="v-table">
+          <tr><th>Part</th><th>Preview</th><th>Color</th><th>Var</th><th></th><th></th></tr>
+          <tr><td class="v-name">Background</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="cich">Action<button>✕</button></span></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc15')">#02b3fc15</span></td><td class="varname">—</td><td></td><td></td></tr>
+          <tr><td class="v-name">Border</td><td></td><td><span class="hexdash">—</span></td><td class="varname">var(--bd2)</td><td></td><td></td></tr>
+          <tr><td class="v-name">Text</td><td></td><td><span class="hexcopy" onclick="copyHex(this,'#e8f4ff')">#e8f4ff</span></td><td class="varname">var(--text)</td><td></td><td></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Status Chip</div>
+      <div class="subcat-why"><b>Purpose:</b> show an app-level status, not tied to a specific game. <b>Why its own subcategory:</b> no remove action at all — instead it's conditionally clickable (only in its error/offline state) to trigger a retry. Uses a solid background instead of translucent since it floats over arbitrary page content and needs to stay legible regardless of what's behind it.</div>
+      <div class="el-block">
+        <div class="el-hdr"><span class="el-hdr-name">Sync status</span><span class="el-hdr-class">#syncPill</span></div>
+        <div class="el-hdr-usage">Mobile only, floating bottom-left — clickable to retry only when in the error/offline state</div>
+        <table class="v-table">
+          <tr><th>State</th><th>Preview</th><th>Dot color</th><th>Var</th><th></th><th></th></tr>
+          <tr><td class="v-name">Saving… (dot pulses)</td><td class="v-preview" style="background:var(--base);border-radius:6px"><span style="display:inline-flex;align-items:center;gap:.25rem;background:#0d1e33;border:1px solid #02b3fc44;border-radius:99px;padding:.18rem .5rem .18rem .6rem;font-size:.65rem;color:#4a6280"><span style="width:7px;height:7px;border-radius:50%;background:#f7cd26;display:inline-block"></span>Saving…</span></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#f7cd26')">#f7cd26</span></td><td class="varname">var(--amber)</td><td></td><td></td></tr>
+          <tr><td class="v-name">Saved</td><td class="v-preview" style="background:var(--base);border-radius:6px"><span style="display:inline-flex;align-items:center;gap:.25rem;background:#0d1e33;border:1px solid #02b3fc44;border-radius:99px;padding:.18rem .5rem .18rem .6rem;font-size:.65rem;color:#4a6280"><span style="width:7px;height:7px;border-radius:50%;background:#9cff00;display:inline-block"></span>Saved</span></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#9cff00')">#9cff00</span></td><td class="varname">var(--green)</td><td></td><td></td></tr>
+          <tr><td class="v-name">Sync failed</td><td class="v-preview" style="background:var(--base);border-radius:6px"><span style="display:inline-flex;align-items:center;gap:.25rem;background:#0d1e33;border:1px solid #02b3fc44;border-radius:99px;padding:.18rem .5rem .18rem .6rem;font-size:.65rem;color:#4a6280"><span style="width:7px;height:7px;border-radius:50%;background:#ff00aa;display:inline-block"></span>Sync failed</span></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#ff00aa')">#ff00aa</span></td><td class="varname">var(--pink)</td><td></td><td></td></tr>
+          <tr><td class="v-name">Offline</td><td class="v-preview" style="background:var(--base);border-radius:6px"><span style="display:inline-flex;align-items:center;gap:.25rem;background:#0d1e33;border:1px solid #02b3fc44;border-radius:99px;padding:.18rem .5rem .18rem .6rem;font-size:.65rem;color:#4a6280"><span style="width:7px;height:7px;border-radius:50%;background:#4a6280;display:inline-block"></span>Offline</span></td>
+            <td><span class="hexcopy" onclick="copyHex(this,'#4a6280')">#4a6280</span></td><td class="varname">var(--t3)</td><td></td><td></td></tr>
+          <tr><td class="v-name">Container, resting (any state)</td><td class="v-preview" style="background:var(--base);border-radius:6px"><span style="display:inline-flex;align-items:center;gap:.25rem;background:#0d1e33;border:1px solid #02b3fc44;border-radius:99px;padding:.18rem .5rem .18rem .6rem;font-size:.65rem;color:#4a6280"><span style="width:7px;height:7px;border-radius:50%;background:#4a6280;display:inline-block"></span>Offline</span></td>
+            <td colspan="4" class="v-note">bg <span class="hexcopy" onclick="copyHex(this,'#0d1e33')">#0d1e33</span> var(--s1) · border <span class="hexcopy" onclick="copyHex(this,'#02b3fc44')">#02b3fc44</span> var(--bd2) · text <span class="hexcopy" onclick="copyHex(this,'#4a6280')">#4a6280</span> var(--t3)</td></tr>
+          <tr><td class="v-name">Container, hover — only in Sync failed / Offline (the only clickable states)</td><td class="v-preview" style="background:var(--base);border-radius:6px"><span style="display:inline-flex;align-items:center;gap:.25rem;background:#0d1e33;border:1px solid #ff00aa;border-radius:99px;padding:.18rem .5rem .18rem .6rem;font-size:.65rem;color:#ff00aa"><span style="width:7px;height:7px;border-radius:50%;background:#ff00aa;display:inline-block"></span>Sync failed</span></td>
+            <td colspan="4" class="v-note">border + text both switch to <span class="hexcopy" onclick="copyHex(this,'#ff00aa')">#ff00aa</span> var(--pink)</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ STAT ══════════════════════ -->
+  <div class="type-sec" id="stat">
+    <div class="type-hdr"><span class="type-shape" style="border-color:transparent"></span><h2>Stat</h2></div>
+    <p class="type-desc">A plain-text, aggregate page-level readout — not a status on any one item.</p>
+    <div class="type-diff"><b>How it differs from Pill/Badge/Chip:</b> no box at all — no radius, no border, no background/fill, not interactive. This is deliberate: Pill, Badge, and Chip are all "a labeled box" of some kind; Stat is the one type that's just text, which is what visually marks it as a summary rather than a per-item indicator.</div>
+    <div class="type-where">Used in: header, sidebar stats row.</div>
+    <p class="no-subcat">No subcategories — one plain-text treatment used everywhere it appears.</p>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Games / DLC / cost totals</span><span class="el-hdr-class">.chip, .sc-chip</span></div>
+      <div class="el-hdr-usage">Header (wishlist mode) and sidebar stats row (collection mode) — filtered/total game count, DLC count, total cost</div>
+      <table class="v-table">
+        <tr><th>Part</th><th>Preview</th><th>Color</th><th>Var</th><th></th><th></th></tr>
+        <tr><td class="v-name">Value (bold)</td><td class="v-preview" style="background:var(--s1);border-radius:6px"><span class="chip"><b>42</b><span style="color:var(--muted)">/58</span> games</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc')">#02b3fc</span></td><td class="varname">var(--blue)</td><td></td><td></td></tr>
+        <tr><td class="v-name">Total (muted)</td><td></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#b3b3b3')">#b3b3b3</span></td><td class="varname">var(--muted)</td><td></td><td></td></tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function copyHex(el, val){
+  const original = el.textContent;
+  const feedback = () => {
+    el.textContent = '✓ copied';
+    el.classList.add('copied');
+    setTimeout(() => { el.textContent = original; el.classList.remove('copied'); }, 900);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(val).then(feedback).catch(() => fallbackCopy(val, feedback));
+  } else {
+    fallbackCopy(val, feedback);
+  }
+}
+function fallbackCopy(text, cb){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  cb();
+}
+</script>
+</body>
+</html>
