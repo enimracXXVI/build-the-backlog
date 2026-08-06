@@ -4742,10 +4742,15 @@ document.addEventListener('keydown',function(e){
     if(updCountEl)updCountEl.textContent=updatedCount;
     const emptyEl=document.getElementById('plcFilterEmpty');
     if(!emptyEl)return;
-    if(!entries.length){emptyEl.style.display='none';return;}
+    if(!entries.length){emptyEl.style.display='none';log.style.display='';return;}
     const filter=log.dataset.filter||'all';
     const matchCount=filter==='updated'?updatedCount:entries.length;
+    // Every child can be individually hidden by the CSS filter rule while
+    // #plcLog itself still renders its border/padding as an empty box — hide
+    // the whole log container too so the "No games matched" message doesn't
+    // sit above a redundant empty rectangle.
     emptyEl.style.display=matchCount?'none':'';
+    log.style.display=matchCount?'':'none';
   }
   document.querySelectorAll('#plcFilterRow .fbar-pill').forEach(btn=>{
     btn.onclick=()=>_plcSetFilter(btn.dataset.filter);
