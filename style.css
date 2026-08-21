@@ -643,6 +643,7 @@ button{text-transform:none;letter-spacing:0}
 .ggr-filter-row{display:flex;gap:.35rem;margin-bottom:.5rem}
 .ggr-grid[data-filter="up"] .ggr-card:not(.up){display:none}
 .ggr-grid[data-filter="down"] .ggr-card:not(.ok){display:none}
+#rdcGrid[data-filter="updated"] .ggr-card:not(.ok){display:none}
 /* Reserve a fixed, generous right margin for the scrollbar instead of
    scrollbar-gutter — gutter support (and whether the thin custom
    ::-webkit-scrollbar even applies to this element) is inconsistent across

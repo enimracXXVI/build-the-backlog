@@ -299,6 +299,7 @@ function getLatestFetchDiffs() {
   const headers = rows[0].map(String);
   const c = h => headers.indexOf(h);
 
+  const newLowCol = c('is_new_low'); // -1 on older sheets pre-dating this column
   const all = rows.slice(1).map(r => ({
     appid: String(r[c('appid')]),
     title: r[c('title')],
@@ -306,6 +307,7 @@ function getLatestFetchDiffs() {
     retail: parseFloat(r[c('retail')]) || 0,
     keyshop: parseFloat(r[c('keyshop')]) || 0,
     currency: r[c('currency')],
+    isNewLow: newLowCol !== -1 && !!Number(r[newLowCol]),
   })).sort((a, b) => a.fetched_at - b.fetched_at);
   if (!all.length) return [];
 
@@ -358,6 +360,7 @@ function getLatestFetchDiffs() {
         prevKeyshop: prev ? prev.keyshop : 0,
         lowRetail: low.retail,
         lowKeyshop: low.keyshop,
+        isNewLow: cur.isNewLow,
       };
     }).sort((a, b) => b.fetched_at - a.fetched_at);
 }
@@ -411,12 +414,20 @@ function upsertGamePrices(entries) {
       const i = idx[key];
       const prevLowR = parseFloat(data[i][c('personal_low_retail')])  || Infinity;
       const prevLowK = parseFloat(data[i][c('personal_low_keyshop')]) || Infinity;
+      // "New low" means the lowest price ever recorded for this game across
+      // BOTH retail and keyshop — not a new low within its own field alone,
+      // which could flag a €12 retail price as a record even though a €9
+      // key has been available all along. Compare the best of this fetch's
+      // two prices against the best of the two prior lows.
+      const prevOverallLow = Math.min(prevLowR, prevLowK);
+      const bestNew = Math.min(retail > 0 ? retail : Infinity, keyshop > 0 ? keyshop : Infinity);
       data[i][c('title')]        = entry.title;
       data[i][c('last_retail')]  = retail  || '';
       data[i][c('last_keyshop')] = keyshop || '';
       data[i][c('last_fetched')] = now;
-      if (retail  > 0 && retail  <= prevLowR) { data[i][c('personal_low_retail')]  = retail;  newLows.push(key); }
-      if (keyshop > 0 && keyshop <= prevLowK)   data[i][c('personal_low_keyshop')] = keyshop;
+      if (retail  > 0 && retail  <= prevLowR) data[i][c('personal_low_retail')]  = retail;
+      if (keyshop > 0 && keyshop <= prevLowK) data[i][c('personal_low_keyshop')] = keyshop;
+      if (bestNew !== Infinity && bestNew < prevOverallLow) newLows.push(key);
       lows[key] = {
         retail:  parseFloat(data[i][c('personal_low_retail')])  || 0,
         keyshop: parseFloat(data[i][c('personal_low_keyshop')]) || 0,
@@ -432,7 +443,9 @@ function upsertGamePrices(entries) {
       row[c('last_fetched')]         = now;
       idx[key] = data.length;
       data.push(row);
-      if (retail > 0) newLows.push(key);
+      // A brand-new game has no prior price to beat, so its first-ever
+      // check isn't a "new low" — there's nothing yet for it to be lower
+      // than.
       lows[key] = { retail: retail || 0, keyshop: keyshop || 0 };
     }
   });
@@ -444,19 +457,28 @@ function upsertGamePrices(entries) {
 }
 
 // ── Append rows to PriceHistory ──────────────────────────────
+// is_new_low is decided once, up front, by upsertGamePrices (the only place
+// with the pre-update personal-low values to compare against) and passed
+// straight through here for storage — recomputing "was this a new low?"
+// later from the personal_low_* columns doesn't work, since those columns
+// get overwritten to equal the new price the moment it *is* a new low.
 function appendPriceHistory(entries) {
   if (!Array.isArray(entries) || !entries.length) return { ok: true };
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(PRICE_HISTORY_SHEET);
   if (!sheet) {
     sheet = ss.insertSheet(PRICE_HISTORY_SHEET);
-    sheet.appendRow(['id','appid','title','fetched_at','retail','keyshop','currency']);
+    sheet.appendRow(['id','appid','title','fetched_at','retail','keyshop','currency','is_new_low']);
+  } else {
+    const lastCol = Math.max(sheet.getLastColumn(), 1);
+    const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
+    if (headers.indexOf('is_new_low') === -1) sheet.getRange(1, headers.length + 1).setValue('is_new_low');
   }
   const lastRow = sheet.getLastRow();
   const rows = entries.map((e, i) => [
-    lastRow + i, e.appid, e.title, e.fetched_at, e.retail, e.keyshop, e.currency
+    lastRow + i, e.appid, e.title, e.fetched_at, e.retail, e.keyshop, e.currency, e.isNewLow ? 1 : 0
   ]);
-  sheet.getRange(lastRow + 1, 1, rows.length, 7).setValues(rows);
+  sheet.getRange(lastRow + 1, 1, rows.length, 8).setValues(rows);
   return { ok: true };
 }
 

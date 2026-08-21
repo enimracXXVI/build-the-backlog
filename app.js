@@ -4587,6 +4587,45 @@ document.addEventListener('keydown',function(e){
     _rdcGoToGame(card.dataset.appid);
   });
 
+  // "Updated" filter over the results — same fbar-pill/.ggr-grid[data-filter]
+  // component as the Live Prices modal's All/Down/Up filter, reusing the
+  // .ok class rdcCardHTML already sets on changed-date cards.
+  function _rdcSetFilter(filter){
+    grid.dataset.filter=filter;
+    document.querySelectorAll('#rdcFilterRow .fbar-pill').forEach(b=>{
+      b.classList.toggle('selected',b.dataset.filter===filter);
+    });
+    _rdcUpdateFilterUI();
+  }
+  function _rdcUpdateFilterUI(){
+    const cards=[...grid.querySelectorAll('.ggr-card')];
+    const updatedCount=cards.filter(c=>c.classList.contains('ok')).length;
+    const allCountEl=document.getElementById('rdcFilterCountAll');
+    const updCountEl=document.getElementById('rdcFilterCountUpdated');
+    if(allCountEl)allCountEl.textContent=cards.length;
+    if(updCountEl)updCountEl.textContent=updatedCount;
+    const emptyEl=document.getElementById('rdcFilterEmpty');
+    if(!emptyEl)return;
+    if(!cards.length){emptyEl.style.display='none';return;}
+    const filter=grid.dataset.filter||'all';
+    const matchCount=filter==='updated'?updatedCount:cards.length;
+    emptyEl.style.display=matchCount?'none':'';
+  }
+  document.querySelectorAll('#rdcFilterRow .fbar-pill').forEach(btn=>{
+    btn.onclick=()=>_rdcSetFilter(btn.dataset.filter);
+  });
+
+  // Single insertion point for every result card — keeps the grid pinned to
+  // its latest entry as the run progresses (only while the user was already
+  // near the bottom, so scrolling up to re-read an earlier result doesn't
+  // get yanked back down on the next tick) and keeps the filter counts live.
+  function _rdcAppendCard(html){
+    const nearBottom=grid.scrollHeight-grid.scrollTop-grid.clientHeight<40;
+    grid.insertAdjacentHTML('beforeend',html);
+    if(nearBottom)grid.scrollTop=grid.scrollHeight;
+    _rdcUpdateFilterUI();
+  }
+
   // Parse a Steam release_date object into releaseDate (ISO date or display text)
   function parseSteamDate(relObj){
     if(!relObj)return{releaseDate:''};
@@ -4622,6 +4661,8 @@ document.addEventListener('keydown',function(e){
     ov.classList.add('on');
     history.pushState({rdcovOpen:true},'','');
     grid.innerHTML='';
+    document.getElementById('rdcFilterRow').style.display='';
+    _rdcSetFilter('all');
     summary.textContent=resuming
       ?`Resuming — ${doneSet.size} already checked, ${targets.length} left…`
       :`Checking ${targets.length} game${targets.length>1?'s':''}…`;
@@ -4645,7 +4686,7 @@ document.addEventListener('keydown',function(e){
         const json=await res.json();
         const entry=json[g.steamAppId];
         if(!entry||!entry.success||!entry.data){
-          grid.insertAdjacentHTML('beforeend',rdcErrCardHTML(g.title,g.steamAppId));
+          _rdcAppendCard(rdcErrCardHTML(g.title,g.steamAppId));
           failed++;continue;
         }
 
@@ -4655,14 +4696,14 @@ document.addEventListener('keydown',function(e){
         if(newRd!==oldRd){
           const gg=games.find(x=>x.id===g.id);
           if(gg){gg.releaseDate=newRd;save(gg.id);}
-          grid.insertAdjacentHTML('beforeend',rdcCardHTML({title:g.title,appid:g.steamAppId,oldRd,newRd,updated:true}));
+          _rdcAppendCard(rdcCardHTML({title:g.title,appid:g.steamAppId,oldRd,newRd,updated:true}));
           updated++;
         }else{
-          grid.insertAdjacentHTML('beforeend',rdcCardHTML({title:g.title,appid:g.steamAppId,oldRd,newRd,updated:false}));
+          _rdcAppendCard(rdcCardHTML({title:g.title,appid:g.steamAppId,oldRd,newRd,updated:false}));
           unchanged++;
         }
       }catch(err){
-        grid.insertAdjacentHTML('beforeend',rdcErrCardHTML(g.title,g.steamAppId));
+        _rdcAppendCard(rdcErrCardHTML(g.title,g.steamAppId));
         failed++;
       }
 
@@ -5699,12 +5740,14 @@ function ggDiscountPct(liveV,gamePrice){
 }
 // One price field ("Retail"/"Key") inside a live-price result card: current
 // value, a delta badge vs. the price before this run, and either a "low
-// €X" caption or a "★ new low" badge — but only when this *fetch* is what
-// dropped it there (newV is now below the pre-fetch low). A game that has
-// simply sat at its all-time-low price for weeks isn't "new", it's just
-// low; without the newV<lowV check every settled game re-flags as a new
-// low on every single check, forever.
-function ggPriceStatHTML(label,newV,oldV,lowV,gamePrice){
+// €X" caption or a "★ new low" badge. isNewLow comes from the backend
+// (upsertGamePrices, persisted per-fetch by appendPriceHistory) — it's the
+// only source that (a) considers retail and keyshop together rather than
+// each field's own separate low, and (b) survives closing and reopening the
+// modal, since it's decided once at fetch time instead of being re-derived
+// from personal_low_* columns that get overwritten to equal the new price
+// the moment it *is* a new low.
+function ggPriceStatHTML(label,newV,oldV,lowV,gamePrice,isNewLow){
   if(isNaN(newV)||newV<=0){
     return`<div class="ggr-price"><span class="ggr-price-lbl">${label}</span><span class="ggr-price-val ggr-na">—</span></div>`;
   }
@@ -5715,8 +5758,7 @@ function ggPriceStatHTML(label,newV,oldV,lowV,gamePrice){
     :Math.abs(newV-oldV)<0.005
       ?`<span class="bdg ggr-badge flat">=</span>`
       :`<span class="bdg ggr-badge ${newV<oldV?'down':'up'}">${newV<oldV?'↓':'↑'}€${Math.abs(newV-oldV).toFixed(2)}</span>`;
-  const isNewLow=hasOld&&newV<lowV-0.005;
-  const lowBit=!hasOld||lowV<=0
+  const lowBit=lowV<=0
     ?''
     :(isNewLow?`<span class="bdg ggr-badge newlow">★ new low</span>`:`<span class="ggr-lowtext">low €${lowV.toFixed(2)}</span>`);
   const discPct=ggDiscountPct(newV,gamePrice);
@@ -5730,6 +5772,12 @@ function ggPriceCardHTML(e){
   const oldR=e.oldRetail!=null?parseFloat(e.oldRetail):NaN;
   const oldK=e.oldKeyshop!=null?parseFloat(e.oldKeyshop):NaN;
   const lowR=parseFloat(e.lowRetail)||0,lowK=parseFloat(e.lowKeyshop)||0;
+  // The lowest price ever recorded across BOTH fields — shown as the "low
+  // €X" reference under whichever field isn't the one currently holding the
+  // record, so it always reads as "the best price ever seen for this game",
+  // not a field-siloed number.
+  const overallLow=Math.min(lowR>0?lowR:Infinity,lowK>0?lowK:Infinity);
+  const overallLowV=overallLow===Infinity?0:overallLow;
   const hasOldR=!isNaN(oldR)&&oldR>0,hasOldK=!isNaN(oldK)&&oldK>0;
   let cls='skip';
   if((hasOldR&&r<oldR)||(hasOldK&&k<oldK))cls='ok';
@@ -5741,11 +5789,15 @@ function ggPriceCardHTML(e){
   // sinking them to the bottom rather than the top.
   const discR=ggDiscountPct(r,e.price),discK=ggDiscountPct(k,e.price);
   const discPct=discR==null?discK:(discK==null?discR:Math.max(discR,discK));
+  // e.isNewLow is the single unified flag for this fetch — attach the badge
+  // to whichever field actually holds the (now equal-or-lower) record price,
+  // not both, so it isn't shown twice for one event.
+  const bestField=(!isNaN(r)&&r>0&&(isNaN(k)||k<=0||r<=k))?'r':(!isNaN(k)&&k>0?'k':null);
   return`<div class="ggr-card ${cls}" data-appid="${esc(String(e.appid))}"${discPct!=null?` data-disc="${discPct}"`:''} tabindex="0">
     <button class="qb qr ggr-exclude" title="Exclude from Live Price checks" onclick="event.stopPropagation();_ggExcludeGame('${esc(String(e.appid))}')">${IC.close}</button>
     <div class="ggr-title">${esc(e.title)}</div>
-    ${ggPriceStatHTML('Retail',r,oldR,lowR,e.price)}
-    ${ggPriceStatHTML('Key',k,oldK,lowK,e.price)}
+    ${ggPriceStatHTML('Retail',r,oldR,overallLowV,e.price,!!e.isNewLow&&bestField==='r')}
+    ${ggPriceStatHTML('Key',k,oldK,overallLowV,e.price,!!e.isNewLow&&bestField==='k')}
   </div>`;
 }
 function ggPriceErrCardHTML(title,appid){
@@ -6009,6 +6061,7 @@ async function openGgFetchModalIdle(skipShow){
       oldRetail:r.prevRetail,oldKeyshop:r.prevKeyshop,
       lowRetail:r.lowRetail,lowKeyshop:r.lowKeyshop,
       appid:r.appid,price:g?g.price:null,
+      isNewLow:r.isNewLow,
     });
   }).join('');
   _ggShowFilterRow(true);
@@ -6134,7 +6187,7 @@ async function runGGDealsFetch(resumeState){
 
       const priceEntries=[];
       const historyEntries=[];
-      const cardsHtml=[];
+      const cardMeta=[];
       batch.forEach(g=>{
         const d=json.data[g.steamAppId];
         const before=ggPriceCache[g.steamAppId];
@@ -6148,31 +6201,32 @@ async function runGGDealsFetch(resumeState){
             lowKeyshop:before?(before.lowKeyshop||0):0,
           };
           priceEntries.push({appid:g.steamAppId,title:g.title,retail:d.prices.currentRetail,keyshop:d.prices.currentKeyshops});
-          historyEntries.push({appid:g.steamAppId,title:g.title,fetched_at:fetchTs,retail:d.prices.currentRetail,keyshop:d.prices.currentKeyshops,currency:d.prices.currency});
-          cardsHtml.push(ggPriceCardHTML({
-            title:g.title,retail:d.prices.currentRetail,keyshop:d.prices.currentKeyshops,
+          historyEntries.push({appid:g.steamAppId,title:g.title,fetched_at:fetchTs,retail:d.prices.currentRetail,keyshop:d.prices.currentKeyshops,currency:d.prices.currency,isNewLow:false});
+          cardMeta.push({
+            appid:g.steamAppId,title:g.title,retail:d.prices.currentRetail,keyshop:d.prices.currentKeyshops,
             oldRetail:before?before.retail:NaN,oldKeyshop:before?before.keyshop:NaN,
-            lowRetail:before?before.lowRetail:0,lowKeyshop:before?before.lowKeyshop:0,
-            appid:g.steamAppId,price:g.price,
-          }));
+            price:g.price,
+          });
         }else{
-          cardsHtml.push(ggPriceErrCardHTML(g.title,g.steamAppId));
+          cardMeta.push({appid:g.steamAppId,title:g.title,err:true});
         }
       });
       fetched+=batch.length;
       if(SHEET_URL){rateUsed+=batch.length;_ggRenderRateInfo(rateUsed,rateBudget.resetAt);}
       _runSave(GG_RUN_KEY,{remaining:batches.slice(b+1).flat().map(g=>String(g.steamAppId)),total,fetched,startedAt,all:allIds});
-      dispatchRender();
       setProgress(`Batch ${b+1} of ${batches.length} done.`);
-      gridEl.insertAdjacentHTML('beforeend',cardsHtml.join(''));
-      _ggUpdateFilterUI();
-      _ggApplySort();
 
+      // "New low" is decided server-side, considering retail and keyshop
+      // together (see upsertGamePrices) — cards must wait for that result
+      // before rendering, or the badge again becomes a synchronous guess
+      // that a later reopen can't reproduce (the very bug this fixes).
+      let newLowSet=new Set();
       if(SHEET_URL&&priceEntries.length){
         try{
           const r=await fetch(SHEET_URL+'?action=upsertGamePrices'+_tok(),{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(priceEntries)});
           const result=await r.json();
           if(result.newLows&&result.newLows.length){
+            newLowSet=new Set(result.newLows.map(String));
             result.newLows.forEach(appid=>{if(ggPriceCache[appid])ggPriceCache[appid].personalLow=true;});
           }
           if(result.lows){
@@ -6182,8 +6236,8 @@ async function runGGDealsFetch(resumeState){
               ggPriceCache[appid].lowKeyshop=result.lows[appid].keyshop||0;
             });
           }
-          if((result.newLows&&result.newLows.length)||result.lows)dispatchRender();
         }catch(e){}
+        historyEntries.forEach(he=>{he.isNewLow=newLowSet.has(String(he.appid));});
         // Awaited (not fire-and-forget): getLatestFetchDiffs reconstructs the
         // idle view straight from this sheet, so if the modal gets closed and
         // reopened right after the last batch, the write must already be
@@ -6193,6 +6247,21 @@ async function runGGDealsFetch(resumeState){
         }catch(e){}
         fetch(SHEET_URL+'?action=logFetch'+_tok(),{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({ts:fetchTs,count:batch.length})}).catch(()=>{});
       }
+
+      const cardsHtml=cardMeta.map(m=>m.err
+        ?ggPriceErrCardHTML(m.title,m.appid)
+        :ggPriceCardHTML({
+          title:m.title,retail:m.retail,keyshop:m.keyshop,
+          oldRetail:m.oldRetail,oldKeyshop:m.oldKeyshop,
+          lowRetail:ggPriceCache[m.appid]?ggPriceCache[m.appid].lowRetail:0,
+          lowKeyshop:ggPriceCache[m.appid]?ggPriceCache[m.appid].lowKeyshop:0,
+          appid:m.appid,price:m.price,
+          isNewLow:newLowSet.has(String(m.appid)),
+        }));
+      dispatchRender();
+      gridEl.insertAdjacentHTML('beforeend',cardsHtml.join(''));
+      _ggUpdateFilterUI();
+      _ggApplySort();
     }catch(err){
       setProgress(`Error: ${err.message}`);
       console.error('BTB GG.deals error:',err);
