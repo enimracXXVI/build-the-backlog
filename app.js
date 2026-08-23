@@ -5495,6 +5495,12 @@ async function loadSavedPrices(){
       const keyshop=parseFloat(row.last_keyshop)||0;
       const personalLowRetail=parseFloat(row.personal_low_retail)||0;
       const personalLowKeyshop=parseFloat(row.personal_low_keyshop)||0;
+      // "At its all-time low" has to consider both fields together — a game
+      // whose retail low is €2 and keyshop low is €3 is NOT at its all-time
+      // low just because the current keyshop price (€2.50) beats the
+      // keyshop-only record; €2.50 is still above the true €2 overall low.
+      const overallLow=Math.min(personalLowRetail>0?personalLowRetail:Infinity,personalLowKeyshop>0?personalLowKeyshop:Infinity);
+      const bestCurrent=Math.min(retail>0?retail:Infinity,keyshop>0?keyshop:Infinity);
       if(!ggPriceCache[appid]){
         ggPriceCache[appid]={
           retail:retail||'',
@@ -5503,7 +5509,7 @@ async function loadSavedPrices(){
           histKeyshop:'',
           currency:'EUR',
           fetchedAt:row.last_fetched||0,
-          personalLow:personalLowRetail>0&&retail>0&&retail<=personalLowRetail,
+          personalLow:overallLow!==Infinity&&bestCurrent!==Infinity&&bestCurrent<=overallLow,
           lowRetail:personalLowRetail,
           lowKeyshop:personalLowKeyshop,
         };
