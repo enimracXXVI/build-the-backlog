@@ -5778,12 +5778,6 @@ function ggPriceCardHTML(e){
   const oldR=e.oldRetail!=null?parseFloat(e.oldRetail):NaN;
   const oldK=e.oldKeyshop!=null?parseFloat(e.oldKeyshop):NaN;
   const lowR=parseFloat(e.lowRetail)||0,lowK=parseFloat(e.lowKeyshop)||0;
-  // The lowest price ever recorded across BOTH fields — shown as the "low
-  // €X" reference under whichever field isn't the one currently holding the
-  // record, so it always reads as "the best price ever seen for this game",
-  // not a field-siloed number.
-  const overallLow=Math.min(lowR>0?lowR:Infinity,lowK>0?lowK:Infinity);
-  const overallLowV=overallLow===Infinity?0:overallLow;
   const hasOldR=!isNaN(oldR)&&oldR>0,hasOldK=!isNaN(oldK)&&oldK>0;
   let cls='skip';
   if((hasOldR&&r<oldR)||(hasOldK&&k<oldK))cls='ok';
@@ -5802,8 +5796,8 @@ function ggPriceCardHTML(e){
   return`<div class="ggr-card ${cls}" data-appid="${esc(String(e.appid))}"${discPct!=null?` data-disc="${discPct}"`:''} tabindex="0">
     <button class="qb qr ggr-exclude" title="Exclude from Live Price checks" onclick="event.stopPropagation();_ggExcludeGame('${esc(String(e.appid))}')">${IC.close}</button>
     <div class="ggr-title">${esc(e.title)}</div>
-    ${ggPriceStatHTML('Retail',r,oldR,overallLowV,e.price,!!e.isNewLow&&bestField==='r')}
-    ${ggPriceStatHTML('Key',k,oldK,overallLowV,e.price,!!e.isNewLow&&bestField==='k')}
+    ${ggPriceStatHTML('Retail',r,oldR,lowR,e.price,!!e.isNewLow&&bestField==='r')}
+    ${ggPriceStatHTML('Key',k,oldK,lowK,e.price,!!e.isNewLow&&bestField==='k')}
   </div>`;
 }
 function ggPriceErrCardHTML(title,appid){
