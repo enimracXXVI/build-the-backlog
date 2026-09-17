@@ -3586,12 +3586,19 @@ function parseStoreLink(url){
 }
 document.getElementById('fStore').addEventListener('blur',()=>{
   const url=document.getElementById('fStore').value.trim();if(!url)return;
-  const parsed=parseStoreLink(url);if(!parsed)return;
+  // extractAppId (not parseStoreLink) on purpose — parseStoreLink also
+  // requires the trailing /Slug_Name/ segment to get a title guess out of
+  // the URL, but plenty of real Steam share links (mobile share sheet,
+  // tracking params appended right after the app id) don't have one. That
+  // used to make this whole handler bail out and never call steamAutoFill
+  // at all — no fetch, no fields filled, no error, just silence — even
+  // though the App ID was right there in the URL and perfectly extractable.
+  const appId=extractAppId(url);if(!appId)return;
   const appIdEl=document.getElementById('fAppId');
-  if(!appIdEl.value.trim())appIdEl.value=parsed.appId;
+  if(!appIdEl.value.trim())appIdEl.value=appId;
   checkAppIdDup();
   // Always fetch — title will be overwritten with the correct API name (fromUrl=true)
-  steamAutoFill(parsed.appId,{fromUrl:true});
+  steamAutoFill(appId,{fromUrl:true});
 });
 
 // ══════════════════════════════════════════
@@ -6025,7 +6032,7 @@ async function openGgFetchModalIdle(skipShow){
   let rows,rateBudget={used:0,resetAt:0};
   try{
     const [res,budget]=await Promise.all([
-      fetch(SHEET_URL+'?action=getLatestFetchDiffs&_='+Date.now()+_tok(),{mode:'cors'}),
+      fetchWithTimeout(SHEET_URL+'?action=getLatestFetchDiffs&_='+Date.now()+_tok(),15000),
       ggRateBudget(),
     ]);
     rows=await res.json();

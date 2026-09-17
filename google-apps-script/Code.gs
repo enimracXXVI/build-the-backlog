@@ -294,13 +294,25 @@ function getLatestFetchDiffs() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const histSheet = ss.getSheetByName(PRICE_HISTORY_SHEET);
   if (!histSheet) return [];
-  const rows = histSheet.getDataRange().getValues();
-  if (rows.length < 2) return [];
-  const headers = rows[0].map(String);
+  const lastRow = histSheet.getLastRow();
+  const lastCol = histSheet.getLastColumn();
+  if (lastRow < 2) return [];
+  const headers = histSheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
   const c = h => headers.indexOf(h);
 
+  // PriceHistory is append-only — one row per game per run, forever — so
+  // getDataRange().getValues() here got slower every week as it grew, and on
+  // a slow mobile connection the request would time out or get dropped
+  // before Apps Script finished ("Couldn't load last results."). Only the
+  // most recent couple of runs can ever matter (this run, plus the one
+  // before it for the prev-price diff), so cap how far back we read instead
+  // of scanning the whole sheet regardless of its size.
+  const TAIL_ROWS = 4000;
+  const startRow = Math.max(2, lastRow - TAIL_ROWS + 1);
+  const rows = histSheet.getRange(startRow, 1, lastRow - startRow + 1, lastCol).getValues();
+
   const newLowCol = c('is_new_low'); // -1 on older sheets pre-dating this column
-  const all = rows.slice(1).map(r => ({
+  const all = rows.map(r => ({
     appid: String(r[c('appid')]),
     title: r[c('title')],
     fetched_at: Number(r[c('fetched_at')]) || 0,
