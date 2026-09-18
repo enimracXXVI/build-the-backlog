@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Build the Backlog — Console Debugging Guide</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+.audit-wrap{max-width:1100px;margin:0 auto;padding:2rem 1.2rem 6rem;font-family:'Inter',sans-serif}
+.audit-h1{font-family:'Rajdhani',sans-serif;font-size:1.9rem;font-weight:700;color:var(--text);margin-bottom:.3rem}
+.audit-sub{color:var(--t2);font-size:.9rem;margin-bottom:1.4rem;max-width:880px;line-height:1.5}
+.audit-note{font-size:.72rem;color:var(--amber);background:#f7cd2610;border:1px solid #f7cd2640;border-radius:6px;padding:.6rem .8rem;margin-bottom:2rem;line-height:1.6}
+.audit-note code{color:var(--text)}
+.audit-toc{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:2rem;font-size:.75rem}
+.audit-toc a{color:var(--blue);border:1px solid var(--bd2);border-radius:99px;padding:.25rem .65rem}
+
+.sec{margin-bottom:2.6rem}
+.sec-hdr{display:flex;align-items:baseline;gap:.8rem;border-bottom:2px solid var(--bd2);padding-bottom:.5rem;margin-bottom:.6rem}
+.sec-hdr h2{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text)}
+.sec-desc{color:var(--t2);font-size:.82rem;line-height:1.6;max-width:860px;margin-bottom:1rem}
+.sec-desc code{color:var(--amber);font-size:.78rem}
+
+.code-block{background:var(--base);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:.4rem}
+.code-hdr{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.5rem .8rem;background:var(--s1);border-bottom:1px solid var(--bd)}
+.code-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;color:var(--text)}
+.copy-btn{font-family:monospace;font-size:.68rem;color:var(--t2);background:var(--base);border:1px solid var(--bd);
+  border-radius:4px;padding:3px 9px;cursor:pointer;transition:all .12s;white-space:nowrap}
+.copy-btn:hover{border-color:var(--blue);color:var(--blue)}
+.copy-btn.copied{border-color:var(--green);color:var(--green);background:#9cff0015}
+.code-pre{margin:0;padding:.8rem 1rem;overflow-x:auto;font-size:.74rem;line-height:1.55}
+.code-pre code{font-family:'SFMono-Regular',Consolas,monospace;color:var(--text);white-space:pre}
+
+.tag{display:inline-block;font-family:monospace;font-size:.62rem;color:var(--t3);background:var(--s1);
+  border:1px solid var(--bd);border-radius:4px;padding:1px 6px;margin-right:.3rem}
+</style>
+</head>
+<body style="overflow:auto;height:auto;display:block">
+<div class="audit-wrap">
+  <h1 class="audit-h1">Build the Backlog — Console Debugging Guide</h1>
+  <p class="audit-sub">Copy-paste snippets for the browser DevTools console. They read the live in-memory <code>games</code> array — the same data currently rendered on screen — so open the app, let it finish loading, then open DevTools (<code>F12</code> or <code>Cmd/Ctrl+Shift+J</code>), go to the <b>Console</b> tab, paste a snippet, and hit Enter. Every snippet is self-contained: no setup step, no shared state between them.</p>
+
+  <div class="audit-note">These are read-only reporting scripts — none of them modify <code>games</code>, write to the sheet, or touch <code>localStorage</code>. Safe to run at any time, including on production data.</div>
+
+  <div class="audit-toc">
+    <a href="#genres">Genres</a><a href="#tags">Tags</a><a href="#developers">Developers</a><a href="#publishers">Publishers</a>
+    <a href="#all-four">All Four At Once</a><a href="#variants">Casing Variants</a>
+    <a href="#dupe-title">Duplicate Titles</a><a href="#dupe-appid">Duplicate Steam App IDs</a>
+    <a href="#orphan-dlc">Orphan DLC</a><a href="#completeness">Missing Data</a><a href="#trade-keys">Trade Keys</a><a href="#full-report">Full Report</a>
+  </div>
+
+  <!-- ══════════════════════ GENRES ══════════════════════ -->
+  <div class="sec" id="genres">
+    <div class="sec-hdr"><h2>Unique Genres</h2></div>
+    <p class="sec-desc">Every distinct value in <code>games[].genres</code>, with how many games use each, sorted alphabetically.</p>
+    <div class="code-block">
+      <div class="code-hdr"><span class="code-title">Unique genres + counts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre class="code-pre"><code>(() => {
+  const toArr = v => Array.isArray(v) ? v : (typeof v === 'string' &amp;&amp; v.trim() ? v.split(',').map(s => s.trim()).filter(Boolean) : []);
+  const counts = {};
+  games.forEach(g => toArr(g.genres).forEach(v => { if (v) counts[v] = (counts[v] || 0) + 1; }));
+  const rows = Object.entries(counts).sort((a, b) => a[0].localeCompare(b[0])).map(([genre, count]) => ({ genre, count }));
+  console.table(rows);
+  console.log(`${rows.length} unique genres · ${games.length} games scanned`);
+})();</code></pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ TAGS ══════════════════════ -->
+  <div class="sec" id="tags">
+    <div class="sec-hdr"><h2>Unique Tags</h2></div>
+    <p class="sec-desc">Every distinct value in <code>games[].tags</code>, with counts, sorted alphabetically.</p>
+    <div class="code-block">
+      <div class="code-hdr"><span class="code-title">Unique tags + counts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre class="code-pre"><code>(() => {
+  const toArr = v => Array.isArray(v) ? v : (typeof v === 'string' &amp;&amp; v.trim() ? v.split(',').map(s => s.trim()).filter(Boolean) : []);
+  const counts = {};
+  games.forEach(g => toArr(g.tags).forEach(v => { if (v) counts[v] = (counts[v] || 0) + 1; }));
+  const rows = Object.entries(counts).sort((a, b) => a[0].localeCompare(b[0])).map(([tag, count]) => ({ tag, count }));
+  console.table(rows);
+  console.log(`${rows.length} unique tags · ${games.length} games scanned`);
+})();</code></pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ DEVELOPERS ══════════════════════ -->
+  <div class="sec" id="developers">
+    <div class="sec-hdr"><h2>Unique Developers</h2></div>
+    <p class="sec-desc">Every distinct value in <code>games[].developer</code>. Internally this field is normalized to an array (comma-separated strings get split), so this handles both shapes.</p>
+    <div class="code-block">
+      <div class="code-hdr"><span class="code-title">Unique developers + counts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre class="code-pre"><code>(() => {
+  const toArr = v => Array.isArray(v) ? v : (typeof v === 'string' &amp;&amp; v.trim() ? v.split(',').map(s => s.trim()).filter(Boolean) : []);
+  const counts = {};
+  games.forEach(g => toArr(g.developer).forEach(v => { if (v) counts[v] = (counts[v] || 0) + 1; }));
+  const rows = Object.entries(counts).sort((a, b) => a[0].localeCompare(b[0])).map(([developer, count]) => ({ developer, count }));
+  console.table(rows);
+  console.log(`${rows.length} unique developers · ${games.length} games scanned`);
+})();</code></pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ PUBLISHERS ══════════════════════ -->
+  <div class="sec" id="publishers">
+    <div class="sec-hdr"><h2>Unique Publishers</h2></div>
+    <p class="sec-desc">Every distinct value in <code>games[].publisher</code>, same handling as developers above.</p>
+    <div class="code-block">
+      <div class="code-hdr"><span class="code-title">Unique publishers + counts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre class="code-pre"><code>(() => {
+  const toArr = v => Array.isArray(v) ? v : (typeof v === 'string' &amp;&amp; v.trim() ? v.split(',').map(s => s.trim()).filter(Boolean) : []);
+  const counts = {};
+  games.forEach(g => toArr(g.publisher).forEach(v => { if (v) counts[v] = (counts[v] || 0) + 1; }));
+  const rows = Object.entries(counts).sort((a, b) => a[0].localeCompare(b[0])).map(([publisher, count]) => ({ publisher, count }));
+  console.table(rows);
+  console.log(`${rows.length} unique publishers · ${games.length} games scanned`);
+})();</code></pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ ALL FOUR AT ONCE ══════════════════════ -->
+  <div class="sec" id="all-four">
+    <div class="sec-hdr"><h2>All Four At Once</h2></div>
+    <p class="sec-desc">Same as the four snippets above, but run together and grouped in the console — handy when you just want the full taxonomy dump in one paste.</p>
+    <div class="code-block">
+      <div class="code-hdr"><span class="code-title">Genres, tags, developers &amp; publishers</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre class="code-pre"><code>(() => {
+  const toArr = v => Array.isArray(v) ? v : (typeof v === 'string' &amp;&amp; v.trim() ? v.split(',').map(s => s.trim()).filter(Boolean) : []);
+  ['genres', 'tags', 'developer', 'publisher'].forEach(field => {
+    const counts = {};
+    games.forEach(g => toArr(g[field]).forEach(v => { if (v) counts[v] = (counts[v] || 0) + 1; }));
+    const rows = Object.entries(counts).sort((a, b) => a[0].localeCompare(b[0])).map(([name, count]) => ({ [field]: name, count }));
+    console.group(`${field} — ${rows.length} unique`);
+    console.table(rows);
+    console.groupEnd();
+  });
+})();</code></pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ CASING / SPACING VARIANTS ══════════════════════ -->
+  <div class="sec" id="variants">
+    <div class="sec-hdr"><h2>Casing / Spacing Variants <span class="tag">taxonomy hygiene</span></h2></div>
+    <p class="sec-desc">Flags values that are duplicates <i>in spirit</i> but not in exact string form — e.g. <code>"Co-op"</code> vs <code>"co-op"</code>, or a stray trailing space. These fragment filters silently, so they're worth cleaning up even though they aren't literal duplicates.</p>
+    <div class="code-block">
+      <div class="code-hdr"><span class="code-title">Find case/whitespace variant groups</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre class="code-pre"><code>(() => {
+  const toArr = v => Array.isArray(v) ? v : (typeof v === 'string' &amp;&amp; v.trim() ? v.split(',').map(s => s.trim()).filter(Boolean) : []);
+  let found = false;
+  ['genres', 'tags', 'developer', 'publisher'].forEach(field => {
+    const variants = {};
+    games.forEach(g => toArr(g[field]).forEach(v => {
+      if (!v) return;
+      const key = v.toLowerCase();
+      (variants[key] = variants[key] || new Set()).add(v);
+    }));
+    const clashes = Object.entries(variants).filter(([, set]) => set.size > 1);
+    if (clashes.length) {
+      found = true;
+      console.group(`⚠ ${field} — ${clashes.length} variant group(s)`);
+      clashes.forEach(([, set]) => console.log([...set].join('  ⟷  ')));
+      console.groupEnd();
+    }
+  });
+  if (!found) console.log('No casing/spacing variants found across genres, tags, developer, publisher.');
+})();</code></pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ DUPLICATE TITLES ══════════════════════ -->
+  <div class="sec" id="dupe-title">
+    <div class="sec-hdr"><h2>Duplicate Games — by Title</h2></div>
+    <p class="sec-desc">Groups games whose titles match case-insensitively (trimmed), and prints each group with its <code>id</code>, <code>status</code>, <code>steamAppId</code> and <code>type</code> so you can tell which entry to keep.</p>
+    <div class="code-block">
+      <div class="code-hdr"><span class="code-title">Find duplicate titles</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre class="code-pre"><code>(() => {
+  const groups = {};
+  games.forEach(g => {
+    const key = (g.title || '').trim().toLowerCase();
+    if (!key) return;
+    (groups[key] = groups[key] || []).push(g);
+  });
+  const dupes = Object.values(groups).filter(arr => arr.length > 1);
+  console.log(`${dupes.length} duplicate title group(s)`);
+  dupes.forEach(arr => {
+    console.group(`"${arr[0].title}" × ${arr.length}`);
+    console.table(arr.map(g => ({ id: g.id, status: g.status, steamAppId: g.steamAppId, type: g.type })));
+    console.groupEnd();
+  });
+})();</code></pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ DUPLICATE STEAM APP IDS ══════════════════════ -->
+  <div class="sec" id="dupe-appid">
+    <div class="sec-hdr"><h2>Duplicate Games — by Steam App ID</h2></div>
+    <p class="sec-desc">Groups games sharing the same non-empty <code>steamAppId</code>. Two entries with the same App ID are almost always the same game added twice (e.g. once on the wishlist, once accidentally re-added after purchase).</p>
+    <div class="code-block">
+      <div class="code-hdr"><span class="code-title">Find duplicate Steam App IDs</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre class="code-pre"><code>(() => {
+  const groups = {};
+  games.forEach(g => {
+    const id = g.steamAppId ? String(g.steamAppId).trim() : '';
+    if (!id) return;
+    (groups[id] = groups[id] || []).push(g);
+  });
+  const dupes = Object.entries(groups).filter(([, arr]) => arr.length > 1);
+  console.log(`${dupes.length} duplicate steamAppId group(s)`);
+  dupes.forEach(([id, arr]) => {
+    console.group(`steamAppId ${id} × ${arr.length}`);
+    console.table(arr.map(g => ({ id: g.id, title: g.title, status: g.status, type: g.type })));
+    console.groupEnd();
+  });
+})();</code></pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ ORPHAN DLC ══════════════════════ -->
+  <div class="sec" id="orphan-dlc">
+    <div class="sec-hdr"><h2>Orphan DLC <span class="tag">integrity check</span></h2></div>
+    <p class="sec-desc">DLC entries (<code>type: 'dlc'</code>) whose <code>parentAppId</code> doesn't match the <code>steamAppId</code> of any game in the list — these won't nest under a parent and will render as if they had no parent.</p>
+    <div class="code-block">
+      <div class="code-hdr"><span class="code-title">Find DLC with no matching parent</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre class="code-pre"><code>(() => {
+  const appIds = new Set(games.filter(g => g.steamAppId).map(g => String(g.steamAppId)));
+  const orphans = games.filter(g => g.type === 'dlc' &amp;&amp; g.parentAppId &amp;&amp; !appIds.has(String(g.parentAppId)));
+  console.log(`${orphans.length} orphan DLC entr${orphans.length === 1 ? 'y' : 'ies'}`);
+  console.table(orphans.map(g => ({ id: g.id, title: g.title, parentAppId: g.parentAppId, status: g.status })));
+})();</code></pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ DATA COMPLETENESS ══════════════════════ -->
+  <div class="sec" id="completeness">
+    <div class="sec-hdr"><h2>Missing Data</h2></div>
+    <p class="sec-desc">Non-cancelled games missing a Steam App ID, cover image, genres, developer, or publisher — the fields that drive cover art, filters, and store links. DLC rows are excluded from the Steam App ID check since some DLC is tracked without its own store page.</p>
+    <div class="code-block">
+      <div class="code-hdr"><span class="code-title">Find incomplete game records</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre class="code-pre"><code>(() => {
+  const toArr = v => Array.isArray(v) ? v : (typeof v === 'string' &amp;&amp; v.trim() ? v.split(',').map(s => s.trim()).filter(Boolean) : []);
+  const rows = games.filter(g => g.status !== 'cancelled').map(g => {
+    const missing = [];
+    if (!g.steamAppId &amp;&amp; g.type !== 'dlc') missing.push('steamAppId');
+    if (!g.cover &amp;&amp; !g.steamAppId) missing.push('cover');
+    if (!toArr(g.genres).length) missing.push('genres');
+    if (!toArr(g.developer).length) missing.push('developer');
+    if (!toArr(g.publisher).length) missing.push('publisher');
+    return missing.length ? { id: g.id, title: g.title, status: g.status, missing: missing.join(', ') } : null;
+  }).filter(Boolean);
+  console.log(`${rows.length} game(s) with missing data`);
+  console.table(rows);
+})();</code></pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ TRADE KEYS ══════════════════════ -->
+  <div class="sec" id="trade-keys">
+    <div class="sec-hdr"><h2>Trade Keys</h2></div>
+    <p class="sec-desc">Markdown list of every game with at least one spare trading key set (<code>games[].key</code>, a JSON array of strings populated by hand in the synced Google Sheet), as <code>[title](steamURL)</code> — paste straight into a Markdown doc or Discord message.</p>
+    <div class="code-block">
+      <div class="code-hdr"><span class="code-title">Markdown list of games with a trade key</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre class="code-pre"><code>(() => {
+  const steamUrl = g => g.storeLink || (g.steamAppId
+    ? `https://store.steampowered.com/app/${g.steamAppId}/`
+    : `https://store.steampowered.com/search/?term=${encodeURIComponent(g.title || '')}`);
+  const withKey = games.filter(g => g.key && g.key.length);
+  const md = withKey.map(g => `[${g.title}](${steamUrl(g)})`).join('\n');
+  console.log(md || 'No games with a trade key set.');
+  console.log(`${withKey.length} game(s) with a trade key`);
+})();</code></pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ FULL REPORT ══════════════════════ -->
+  <div class="sec" id="full-report">
+    <div class="sec-hdr"><h2>Full Report</h2></div>
+    <p class="sec-desc">Runs every check above in one paste, prints a grouped summary to the console, and also stashes the raw result on <code>window._btbReport</code> so you can inspect it further (e.g. <code>_btbReport.dupeTitles</code>).</p>
+    <div class="code-block">
+      <div class="code-hdr"><span class="code-title">Run everything</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre class="code-pre"><code>(() => {
+  const toArr = v => Array.isArray(v) ? v : (typeof v === 'string' &amp;&amp; v.trim() ? v.split(',').map(s => s.trim()).filter(Boolean) : []);
+
+  const taxonomy = {};
+  const variants = {};
+  ['genres', 'tags', 'developer', 'publisher'].forEach(field => {
+    const counts = {};
+    const seen = {};
+    games.forEach(g => toArr(g[field]).forEach(v => {
+      if (!v) return;
+      counts[v] = (counts[v] || 0) + 1;
+      const key = v.toLowerCase();
+      (seen[key] = seen[key] || new Set()).add(v);
+    }));
+    taxonomy[field] = Object.entries(counts).sort((a, b) => a[0].localeCompare(b[0]));
+    variants[field] = Object.values(seen).filter(set => set.size > 1).map(set => [...set]);
+  });
+
+  const titleGroups = {};
+  games.forEach(g => {
+    const key = (g.title || '').trim().toLowerCase();
+    if (key) (titleGroups[key] = titleGroups[key] || []).push(g);
+  });
+  const dupeTitles = Object.values(titleGroups).filter(arr => arr.length > 1);
+
+  const appIdGroups = {};
+  games.forEach(g => {
+    const id = g.steamAppId ? String(g.steamAppId).trim() : '';
+    if (id) (appIdGroups[id] = appIdGroups[id] || []).push(g);
+  });
+  const dupeAppIds = Object.entries(appIdGroups).filter(([, arr]) => arr.length > 1);
+
+  const appIds = new Set(games.filter(g => g.steamAppId).map(g => String(g.steamAppId)));
+  const orphanDlc = games.filter(g => g.type === 'dlc' &amp;&amp; g.parentAppId &amp;&amp; !appIds.has(String(g.parentAppId)));
+
+  const missingData = games.filter(g => g.status !== 'cancelled').map(g => {
+    const missing = [];
+    if (!g.steamAppId &amp;&amp; g.type !== 'dlc') missing.push('steamAppId');
+    if (!g.cover &amp;&amp; !g.steamAppId) missing.push('cover');
+    if (!toArr(g.genres).length) missing.push('genres');
+    if (!toArr(g.developer).length) missing.push('developer');
+    if (!toArr(g.publisher).length) missing.push('publisher');
+    return missing.length ? { id: g.id, title: g.title, status: g.status, missing } : null;
+  }).filter(Boolean);
+
+  window._btbReport = { taxonomy, variants, dupeTitles, dupeAppIds, orphanDlc, missingData };
+
+  console.group(`%cBuild the Backlog — Full Report (${games.length} games)`, 'color:#02b3fc;font-weight:bold');
+  ['genres', 'tags', 'developer', 'publisher'].forEach(field => {
+    console.group(`${field} — ${taxonomy[field].length} unique`);
+    console.table(taxonomy[field].map(([name, count]) => ({ [field]: name, count })));
+    if (variants[field].length) console.log(`⚠ ${variants[field].length} casing/spacing variant group(s):`, variants[field]);
+    console.groupEnd();
+  });
+  console.group(`Duplicate titles — ${dupeTitles.length}`);
+  dupeTitles.forEach(arr => console.log(arr[0].title, '×', arr.length, arr.map(g => g.id)));
+  console.groupEnd();
+  console.group(`Duplicate Steam App IDs — ${dupeAppIds.length}`);
+  dupeAppIds.forEach(([id, arr]) => console.log(id, '×', arr.length, arr.map(g => g.title)));
+  console.groupEnd();
+  console.group(`Orphan DLC — ${orphanDlc.length}`);
+  console.table(orphanDlc.map(g => ({ id: g.id, title: g.title, parentAppId: g.parentAppId })));
+  console.groupEnd();
+  console.group(`Missing data — ${missingData.length}`);
+  console.table(missingData.map(r => ({ ...r, missing: r.missing.join(', ') })));
+  console.groupEnd();
+  console.groupEnd();
+  console.log('Full result stored on window._btbReport');
+})();</code></pre>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function copyCode(btn){
+  const pre = btn.closest('.code-block').querySelector('code');
+  const text = pre.textContent;
+  const done = () => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1200);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
+}
+function fallbackCopy(text, cb){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+  cb();
+}
+</script>
+</body>
+</html>
