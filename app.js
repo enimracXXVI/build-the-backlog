@@ -17,11 +17,11 @@ let ggPriceCache = {};
 // cold-start, upstream throttling) leaves an await stuck forever with no way
 // for a sequential per-game check loop (Release Date Check, Price Lookup,
 // Live Prices) to notice and move on. This aborts and fails fast instead.
-async function fetchWithTimeout(url,ms=20000){
+async function fetchWithTimeout(url,ms=20000,options={}){
   const ctrl=new AbortController();
   const t=setTimeout(()=>ctrl.abort(),ms);
   try{
-    return await fetch(url,{signal:ctrl.signal});
+    return await fetch(url,{...options,signal:ctrl.signal});
   }finally{
     clearTimeout(t);
   }
@@ -202,7 +202,7 @@ function fetchMeta(force){
       document.head.appendChild(script);
     });
   }
-  return fetch(SHEET_URL+'?action=getMeta&_='+Date.now()+_tok(),{mode:'cors'})
+  return fetchWithTimeout(SHEET_URL+'?action=getMeta&_='+Date.now()+_tok(),15000)
     .then(r=>r.json()).then(_applyMeta).catch(()=>{});
 }
 loadMetaCache();
@@ -5492,7 +5492,7 @@ let _savedPricesReady=false;
 async function loadSavedPrices(){
   if(!SHEET_URL){_savedPricesReady=true;_ggSetButtonsForState();return;}
   try{
-    const res=await fetch(SHEET_URL+'?action=getGamePrices&_='+Date.now()+_tok(),{mode:'cors'});
+    const res=await fetchWithTimeout(SHEET_URL+'?action=getGamePrices&_='+Date.now()+_tok(),15000);
     const rows=await res.json();
     if(!Array.isArray(rows))return;
     rows.forEach(row=>{
@@ -5563,7 +5563,7 @@ async function renderPriceHistoryChart(g){
   }
   let rows;
   try{
-    const res=await fetch(SHEET_URL+'?action=getPriceHistory&appid='+encodeURIComponent(g.steamAppId)+'&_='+Date.now()+_tok(),{mode:'cors'});
+    const res=await fetchWithTimeout(SHEET_URL+'?action=getPriceHistory&appid='+encodeURIComponent(g.steamAppId)+'&_='+Date.now()+_tok(),15000);
     rows=await res.json();
   }catch(e){
     const el=mount();
@@ -5933,7 +5933,7 @@ document.querySelectorAll('#ggFilterRow .fbar-pill').forEach(btn=>{
 async function ggRateBudget(){
   if(!SHEET_URL)return{used:0,resetAt:0};
   try{
-    const res=await fetch(SHEET_URL+'?action=getRateLog&_='+Date.now()+_tok(),{mode:'cors'});
+    const res=await fetchWithTimeout(SHEET_URL+'?action=getRateLog&_='+Date.now()+_tok(),15000);
     const json=await res.json();
     const entries=Array.isArray(json.entries)?json.entries:[];
     const used=entries.reduce((s,e)=>s+(Number(e.count)||0),0);
@@ -6230,7 +6230,7 @@ async function runGGDealsFetch(resumeState){
       let newLowSet=new Set();
       if(SHEET_URL&&priceEntries.length){
         try{
-          const r=await fetch(SHEET_URL+'?action=upsertGamePrices'+_tok(),{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(priceEntries)});
+          const r=await fetchWithTimeout(SHEET_URL+'?action=upsertGamePrices'+_tok(),20000,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(priceEntries)});
           const result=await r.json();
           if(result.newLows&&result.newLows.length){
             newLowSet=new Set(result.newLows.map(String));
@@ -6250,9 +6250,9 @@ async function runGGDealsFetch(resumeState){
         // reopened right after the last batch, the write must already be
         // committed — otherwise the reopen can silently show an older run.
         try{
-          await fetch(SHEET_URL+'?action=appendPriceHistory'+_tok(),{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(historyEntries)});
+          await fetchWithTimeout(SHEET_URL+'?action=appendPriceHistory'+_tok(),20000,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(historyEntries)});
         }catch(e){}
-        fetch(SHEET_URL+'?action=logFetch'+_tok(),{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({ts:fetchTs,count:batch.length})}).catch(()=>{});
+        fetchWithTimeout(SHEET_URL+'?action=logFetch'+_tok(),20000,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({ts:fetchTs,count:batch.length})}).catch(()=>{});
       }
 
       const cardsHtml=cardMeta.map(m=>m.err
