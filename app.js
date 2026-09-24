@@ -3402,7 +3402,12 @@ async function steamAutoFill(appId,{fromUrl=false}={}){
     const res=await fetch(`${STEAM_WORKER}/?appid=${appId}&_=${Date.now()}`);
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const json=await res.json();
-    const entry=json[appId];
+    // Steam's appdetails API can key the response under a different app id
+    // than the one requested (e.g. an old id that's been migrated to a new
+    // canonical one) — json[appId] then misses a perfectly valid response.
+    // Each of these calls asks for exactly one app id, so the response only
+    // ever has one entry regardless of what it's keyed as; grab that.
+    const entry=Object.values(json)[0];
     if(!entry||!entry.success||!entry.data){steamStatus('No data found for this App ID.','err');return}
     const d=entry.data;
     const filled=[];
@@ -4691,7 +4696,10 @@ document.addEventListener('keydown',function(e){
         const res=await fetchWithTimeout(`${STEAM_WORKER}/?appid=${g.steamAppId}&_=${Date.now()}`);
         if(!res.ok)throw new Error(`HTTP ${res.status}`);
         const json=await res.json();
-        const entry=json[g.steamAppId];
+        // See steamAutoFill's comment — Steam can key the response under a
+        // migrated app id instead of the one requested, so look up the
+        // single entry directly rather than by the id we asked for.
+        const entry=Object.values(json)[0];
         if(!entry||!entry.success||!entry.data){
           _rdcAppendCard(rdcErrCardHTML(g.title,g.steamAppId));
           failed++;continue;
@@ -4822,7 +4830,9 @@ document.addEventListener('keydown',function(e){
       try{
         const res=await fetchWithTimeout(`${STEAM_WORKER}/?appid=${g.steamAppId}&_=${Date.now()}`);
         if(!res.ok)throw new Error(`HTTP ${res.status}`);
-        const json=await res.json();const entry=json[g.steamAppId];
+        const json=await res.json();
+        // See steamAutoFill's comment — same migrated-app-id lookup fix.
+        const entry=Object.values(json)[0];
         if(!entry||!entry.success||!entry.data){plcLog(`✗ ${g.title} — not found on Steam`,'plc-err');failed++;continue;}
         const d=entry.data;
         if(d.price_overview&&d.price_overview.initial!=null){
