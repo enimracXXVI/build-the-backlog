@@ -6275,8 +6275,8 @@ async function runGGDealsFetch(resumeState){
           // a flat/sloped line across the gap either way (see drawPhChart),
           // so no information is lost, just the duplicate rows.
           const newR=parseFloat(d.prices.currentRetail)||0,newK=parseFloat(d.prices.currentKeyshops)||0;
-          const oldR=before?parseFloat(before.retail)||0:NaN,oldK=before?parseFloat(before.keyshop)||0:NaN;
-          const changed=!before||isNaN(oldR)||isNaN(oldK)||Math.abs(newR-oldR)>0.005||Math.abs(newK-oldK)>0.005;
+          const oldR=before?parseFloat(before.retail)||0:0,oldK=before?parseFloat(before.keyshop)||0:0;
+          const changed=!before||Math.abs(newR-oldR)>0.005||Math.abs(newK-oldK)>0.005;
           if(changed)historyEntries.push({appid:g.steamAppId,title:g.title,fetched_at:fetchTs,retail:d.prices.currentRetail,keyshop:d.prices.currentKeyshops,currency:d.prices.currency,isNewLow:false});
           cardMeta.push({
             appid:g.steamAppId,title:g.title,retail:d.prices.currentRetail,keyshop:d.prices.currentKeyshops,
