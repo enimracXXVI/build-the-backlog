@@ -2479,6 +2479,11 @@ document.getElementById('btcConfirm').onclick=()=>{
     const ei=g.purchases.findIndex(p=>p.platform===btcSelPlat);
     if(ei>-1)g.purchases[ei]=newPurchase;else g.purchases.push(newPurchase);
   }
+  // Owning it on Steam now makes "also want it on Steam" moot — without
+  // this, a game bought elsewhere and later added here on Steam keeps
+  // showing in the wishlist tab and staying price-tracked forever, since
+  // both read status==='bought'&&steamWishlist as "still wanted on Steam".
+  if(btcSelPlat==='Steam')g.steamWishlist=false;
   syncLegacyFromPurchases(g);
   save(btcId);closeCollectionModal();dispatchRender();if(openId===btcId)openPanel(btcId);
 };
