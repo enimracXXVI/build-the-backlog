@@ -5467,6 +5467,15 @@ function _runClear(key){try{localStorage.removeItem(key)}catch(e){}}
 //  GG.DEALS LIVE PRICES
 // ══════════════════════════════════════════
 const GG_RUN_KEY='btb_gg_run';
+// GG.deals caps its API key at 100 records/minute AND 1000/hour (each Steam
+// App ID in a batch = 1 record; even an invalid id still counts). The batch
+// size and inter-batch delay below are chosen specifically to respect the
+// per-minute cap — GG_PER_MINUTE_CAP games at most once every
+// GG_BATCH_DELAY_S seconds — so don't change one without the other. The
+// hourly cap is enforced separately via the live x-ratelimit-* headers
+// GG.deals returns on every response (see _ggParseRateHeaders).
+const GG_PER_MINUTE_CAP=100;
+const GG_BATCH_DELAY_S=61;
 let _ggFetchCancelled=false;
 let _ggFetchHidden=false;
 let _ggFetchRunning=false;
@@ -5622,8 +5631,17 @@ function drawPhChart(el,g,allRows,range){
     return;
   }
   const max=Math.max(...vals)*1.08;
-  const stepX=plotW/(rows.length-1);
-  const xOf=i=>padL+i*stepX;
+  // Positioned by actual elapsed time, not row index — rows no longer land
+  // one-per-day now that unchanged checks aren't logged (see the dedup in
+  // runGGDealsFetch), so evenly spacing by index would squeeze a game that
+  // changed price three times in a week onto the same visual scale as one
+  // that sat flat for two months. A straight line between two time-distant
+  // points is exactly the right way to show "held at this price until it
+  // changed" — no gap-filling logic needed beyond that.
+  const times=rows.map(r=>Number(r.fetched_at)||0);
+  const minT=times[0],maxT=times[times.length-1];
+  const span=Math.max(maxT-minT,1);
+  const xOf=i=>padL+(times[i]-minT)/span*plotW;
   const yOf=v=>padT+plotH-(v/max*plotH);
 
   function seriesPts(field){
@@ -5656,9 +5674,11 @@ function drawPhChart(el,g,allRows,range){
     lowKeyshop>0?`<line class="ph-line-low keyshop" x1="${padL}" x2="${W-padR}" y1="${yOf(lowKeyshop).toFixed(1)}" y2="${yOf(lowKeyshop).toFixed(1)}"></line>`:'',
   ].join('');
 
-  // Axis labels are anchored to their point (start/middle/end) instead of
-  // always "middle" so the first/last labels grow inward from the edge
-  // rather than centering on it and getting clipped by the panel.
+  // Axis labels still pick every Nth *row* rather than evenly-spaced dates —
+  // a minor cosmetic simplification: with uneven gaps post-dedup, a burst of
+  // dense rows could claim more labels than a long quiet stretch, but a
+  // proper time-bucketed picker is more complexity than a small sparkline
+  // footer warrants. Positions are correct either way (xOf is real time now).
   const labelEvery=Math.max(1,Math.ceil(rows.length/5));
   const axisLabels=rows.map((r,i)=>{
     if(i%labelEvery!==0&&i!==rows.length-1)return'';
@@ -5669,8 +5689,16 @@ function drawPhChart(el,g,allRows,range){
   }).join('');
 
   const dotsHtml=(pts,cls)=>pts.map(p=>p?`<circle class="ph-dot ${cls}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3"></circle>`:'').join('');
-  const hitW=Math.max(stepX,16);
-  const hitsHtml=rows.map((r,i)=>`<rect class="ph-hit" x="${(xOf(i)-hitW/2).toFixed(1)}" y="${padT}" width="${hitW.toFixed(1)}" height="${plotH}" data-i="${i}" tabindex="0"></rect>`).join('');
+  // Each point's hover/tap target spans halfway to its neighbors instead of
+  // one fixed width — gaps are no longer uniform, so a single stepX would
+  // either overlap adjacent targets in a dense burst or leave dead space
+  // in a sparse stretch.
+  const hitWidthAt=i=>{
+    const left=i>0?xOf(i)-xOf(i-1):(rows.length>1?xOf(i+1)-xOf(i):plotW);
+    const right=i<rows.length-1?xOf(i+1)-xOf(i):left;
+    return Math.max((left+right)/2,16);
+  };
+  const hitsHtml=rows.map((r,i)=>{const hw=hitWidthAt(i);return`<rect class="ph-hit" x="${(xOf(i)-hw/2).toFixed(1)}" y="${padT}" width="${hw.toFixed(1)}" height="${plotH}" data-i="${i}" tabindex="0"></rect>`;}).join('');
 
   el.innerHTML=`${rangeRow}
     <svg viewBox="0 0 ${W} ${H}">
@@ -5933,36 +5961,57 @@ document.querySelectorAll('#ggFilterRow .fbar-pill').forEach(btn=>{
   btn.onclick=()=>_ggSetCardFilter(btn.dataset.filter);
 });
 
-// GG.deals's API key is capped at 1000 records/hour (each Steam App ID in a
-// batch = 1 record). RateLog rows are written per batch by logFetch() but
-// were never read back — this is what actually enforces the cap, shared
-// across devices since it lives in the sheet, not local state. It's a
-// rolling window, not a hard reset — budget frees up as each logged batch
-// ages past an hour old — so resetAt is the *oldest* entry's expiry: the
-// next moment the used count will actually drop.
+// GG.deals reports its own rate-limit state directly via response headers
+// (x-ratelimit-limit/-remaining/-reset — see GG_WORKER, which forwards
+// them) — authoritative, straight from GG.deals, and it accounts for things
+// a client-side reconstruction can't: e.g. an invalid request still counting
+// against the limit, or the same API key being used from somewhere outside
+// this app. Persisted as a single overwritten snapshot (not an append-
+// forever log) so any device's idle view can show the last known budget
+// without making a live API call itself.
 async function ggRateBudget(){
-  if(!SHEET_URL)return{used:0,resetAt:0};
+  if(!SHEET_URL)return{remaining:null,resetAt:0,limit:0};
   try{
-    const res=await fetchWithTimeout(SHEET_URL+'?action=getRateLog&_='+Date.now()+_tok(),15000);
-    const json=await res.json();
-    const entries=Array.isArray(json.entries)?json.entries:[];
-    const used=entries.reduce((s,e)=>s+(Number(e.count)||0),0);
-    const oldestTs=entries.length?Math.min(...entries.map(e=>Number(e.ts)||0)):0;
-    return{used,resetAt:oldestTs?oldestTs+3600000:0};
-  }catch(e){return{used:0,resetAt:0};}
+    const res=await fetchWithTimeout(SHEET_URL+'?action=getRateLimitSnapshot&_='+Date.now()+_tok(),15000);
+    const snap=await res.json();
+    return{
+      remaining:snap&&snap.remaining!=null?Number(snap.remaining):null,
+      resetAt:snap&&snap.resetAt?Number(snap.resetAt):0,
+      limit:snap&&snap.limit?Number(snap.limit):0,
+    };
+  }catch(e){return{remaining:null,resetAt:0,limit:0};}
 }
-function _ggRenderRateInfo(used,resetAt){
+// Reads the rate-limit headers off one GG_WORKER response, or null if
+// they're missing (an older worker deploy, or a network layer that
+// stripped them — callers should keep using the last known snapshot then).
+// x-ratelimit-reset's exact format isn't documented (unix seconds vs. ms vs.
+// an ISO string) — this sniffs the value's shape rather than assuming, but
+// should be double-checked against a real response once live and adjusted
+// here if it turns out to guess wrong.
+function _ggParseRateHeaders(res){
+  const remaining=res.headers.get('x-ratelimit-remaining');
+  if(remaining==null||isNaN(Number(remaining)))return null;
+  const limit=res.headers.get('x-ratelimit-limit');
+  const reset=res.headers.get('x-ratelimit-reset');
+  let resetAt=0;
+  if(reset!=null){
+    const n=Number(reset);
+    if(!isNaN(n))resetAt=n>1e12?n:n*1000; // >1e12 ~ already milliseconds, else unix seconds
+    else{const parsed=Date.parse(reset);if(!isNaN(parsed))resetAt=parsed;}
+  }
+  return{remaining:Number(remaining),limit:limit!=null&&!isNaN(Number(limit))?Number(limit):0,resetAt};
+}
+function _ggRenderRateInfo(remaining,resetAt,limit){
   const el=document.getElementById('ggFetchRateInfo');
   if(!el)return;
-  if(!SHEET_URL){el.textContent='';return;}
-  const remaining=Math.max(0,1000-used);
+  if(!SHEET_URL||remaining==null){el.textContent='';return;}
   let resetBit='';
   if(resetAt){
     const d=new Date(resetAt);
     const hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
     resetBit=` Resets at ${hh}:${mm}.`;
   }
-  el.textContent=`${remaining}/1000 left.${resetBit}`;
+  el.textContent=`${remaining}${limit?`/${limit}`:''} left.${resetBit}`;
 }
 // Every game with a Steam App ID sorts by its own hotness, highest first —
 // same rule live runs already followed via the eligible-list sort, applied
@@ -6035,11 +6084,11 @@ async function openGgFetchModalIdle(skipShow){
   if(!SHEET_URL){
     doneLoading();
     metaEl.textContent='';
-    _ggRenderRateInfo(0);
+    _ggRenderRateInfo(null,0,0);
     gridEl.innerHTML=`<div class="ggr-empty">Connect a sheet to check live prices.</div>`;
     return;
   }
-  let rows,rateBudget={used:0,resetAt:0};
+  let rows,rateBudget={remaining:null,resetAt:0,limit:0};
   try{
     const [res,budget]=await Promise.all([
       fetchWithTimeout(SHEET_URL+'?action=getLatestFetchDiffs&_='+Date.now()+_tok(),15000),
@@ -6054,7 +6103,7 @@ async function openGgFetchModalIdle(skipShow){
     return;
   }
   if(!doneLoading())return;
-  _ggRenderRateInfo(rateBudget.used,rateBudget.resetAt);
+  _ggRenderRateInfo(rateBudget.remaining,rateBudget.resetAt,rateBudget.limit);
   // getLatestFetchDiffs reconstructs the last run from PriceHistory, which
   // doesn't know about skipGGFetch/delisted/cancelled changes made since —
   // filter against the current game list so an excluded game's stale
@@ -6124,7 +6173,7 @@ async function runGGDealsFetch(resumeState){
   }
 
   const batches=[];
-  for(let i=0;i<eligible.length;i+=100)batches.push(eligible.slice(i,i+100));
+  for(let i=0;i<eligible.length;i+=GG_PER_MINUTE_CAP)batches.push(eligible.slice(i,i+GG_PER_MINUTE_CAP));
   const allIds=resumeState&&Array.isArray(resumeState.all)?resumeState.all:eligible.map(g=>String(g.steamAppId));
   _runSave(GG_RUN_KEY,{remaining:eligible.map(g=>String(g.steamAppId)),total,fetched,startedAt,all:allIds});
   _ggFetchCancelled=false;
@@ -6175,19 +6224,18 @@ async function runGGDealsFetch(resumeState){
   history.pushState({ggFetchOpen:true},'','');
   setProgress('Starting…');
 
-  // Shared across devices via RateLog (GG.deals caps the API key at
-  // 1000 records/hour) — read the real current usage once up front, then
-  // track it locally as this run's own batches add to it. resetAt only
-  // moves forward as the *oldest* logged entry ages out, which this run's
-  // own (newer) batches can't affect, so it's safe to read once.
-  const rateBudget=await ggRateBudget();
-  let rateUsed=rateBudget.used;
-  _ggRenderRateInfo(rateUsed,rateBudget.resetAt);
+  // Seeded from the last known snapshot (shared across devices via the
+  // sheet), then kept fresh from this run's own responses as they arrive —
+  // see _ggParseRateHeaders. remaining:null means "never seen a real
+  // header yet" (e.g. brand new setup) — treated as "don't know, don't
+  // block" rather than as zero.
+  let rateInfo=await ggRateBudget();
+  _ggRenderRateInfo(rateInfo.remaining,rateInfo.resetAt,rateInfo.limit);
   let rateLimited=false;
 
   for(let b=0;b<batches.length&&!_ggFetchCancelled;b++){
     const batch=batches[b];
-    if(SHEET_URL&&rateUsed+batch.length>1000){
+    if(SHEET_URL&&rateInfo.remaining!=null&&batch.length>rateInfo.remaining){
       rateLimited=true;
       setProgress(`GG.deals hourly limit reached — ${fetched} of ${total} checked, ${total-fetched} left for next hour.`);
       break;
@@ -6197,6 +6245,7 @@ async function runGGDealsFetch(resumeState){
       const ids=batch.map(g=>g.steamAppId).join(',');
       const res=await fetchWithTimeout(`${GG_WORKER}?ids=${encodeURIComponent(ids)}&region=it&_=${Date.now()}`,30000);
       if(!res.ok)throw new Error(`HTTP ${res.status}`);
+      const freshRate=_ggParseRateHeaders(res);
       const json=await res.json();
       if(json.error)throw new Error(json.error);
       if(!json.success)throw new Error('GG.deals API returned an error');
@@ -6218,7 +6267,17 @@ async function runGGDealsFetch(resumeState){
             lowKeyshop:before?(before.lowKeyshop||0):0,
           };
           priceEntries.push({appid:g.steamAppId,title:g.title,retail:d.prices.currentRetail,keyshop:d.prices.currentKeyshops});
-          historyEntries.push({appid:g.steamAppId,title:g.title,fetched_at:fetchTs,retail:d.prices.currentRetail,keyshop:d.prices.currentKeyshops,currency:d.prices.currency,isNewLow:false});
+          // PriceHistory is append-only forever, so a game whose price sits
+          // unchanged for months (common — most of a wishlist isn't moving
+          // on any given day) would otherwise get an identical new row on
+          // every single run, which is exactly what grew it to 22k+ rows.
+          // Only log a row when something actually moved — the chart draws
+          // a flat/sloped line across the gap either way (see drawPhChart),
+          // so no information is lost, just the duplicate rows.
+          const newR=parseFloat(d.prices.currentRetail)||0,newK=parseFloat(d.prices.currentKeyshops)||0;
+          const oldR=before?parseFloat(before.retail)||0:NaN,oldK=before?parseFloat(before.keyshop)||0:NaN;
+          const changed=!before||isNaN(oldR)||isNaN(oldK)||Math.abs(newR-oldR)>0.005||Math.abs(newK-oldK)>0.005;
+          if(changed)historyEntries.push({appid:g.steamAppId,title:g.title,fetched_at:fetchTs,retail:d.prices.currentRetail,keyshop:d.prices.currentKeyshops,currency:d.prices.currency,isNewLow:false});
           cardMeta.push({
             appid:g.steamAppId,title:g.title,retail:d.prices.currentRetail,keyshop:d.prices.currentKeyshops,
             oldRetail:before?before.retail:NaN,oldKeyshop:before?before.keyshop:NaN,
@@ -6229,7 +6288,8 @@ async function runGGDealsFetch(resumeState){
         }
       });
       fetched+=batch.length;
-      if(SHEET_URL){rateUsed+=batch.length;_ggRenderRateInfo(rateUsed,rateBudget.resetAt);}
+      if(freshRate)rateInfo=freshRate;
+      if(SHEET_URL)_ggRenderRateInfo(rateInfo.remaining,rateInfo.resetAt,rateInfo.limit);
       _runSave(GG_RUN_KEY,{remaining:batches.slice(b+1).flat().map(g=>String(g.steamAppId)),total,fetched,startedAt,all:allIds});
       setProgress(`Batch ${b+1} of ${batches.length} done.`);
 
@@ -6259,10 +6319,14 @@ async function runGGDealsFetch(resumeState){
         // idle view straight from this sheet, so if the modal gets closed and
         // reopened right after the last batch, the write must already be
         // committed — otherwise the reopen can silently show an older run.
-        try{
-          await fetchWithTimeout(SHEET_URL+'?action=appendPriceHistory'+_tok(),20000,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(historyEntries)});
-        }catch(e){}
-        fetchWithTimeout(SHEET_URL+'?action=logFetch'+_tok(),20000,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({ts:fetchTs,count:batch.length})}).catch(()=>{});
+        if(historyEntries.length){
+          try{
+            await fetchWithTimeout(SHEET_URL+'?action=appendPriceHistory'+_tok(),20000,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(historyEntries)});
+          }catch(e){}
+        }
+        if(freshRate){
+          fetchWithTimeout(SHEET_URL+'?action=setRateLimitSnapshot'+_tok(),20000,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(freshRate)}).catch(()=>{});
+        }
       }
 
       const cardsHtml=cardMeta.map(m=>m.err
@@ -6289,7 +6353,7 @@ async function runGGDealsFetch(resumeState){
     }
 
     if(b<batches.length-1&&!_ggFetchCancelled){
-      let secs=61;
+      let secs=GG_BATCH_DELAY_S;
       while(secs>0&&!_ggFetchCancelled){
         setProgress(`Next batch in ${secs}s…`);
         await new Promise(r=>setTimeout(r,1000));

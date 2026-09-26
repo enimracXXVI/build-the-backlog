@@ -48,7 +48,7 @@ function doGet(e) {
         case 'getAll':      result = getAll();      break;
         case 'getMeta':     result = getMeta();     break;
         case 'getPlatStores': result = getPlatStores(); break;
-        case 'getRateLog':    result = getRateLog();      break;
+        case 'getRateLimitSnapshot': result = getRateLimitSnapshot(); break;
         case 'getGamePrices': result = getGamePrices();   break;
         case 'getPriceHistory': result = getPriceHistory(params.appid); break;
         case 'getLatestFetchDiffs': result = getLatestFetchDiffs(); break;
@@ -84,7 +84,7 @@ function doPost(e) {
         case 'deleteRow': result = deleteRow(params.id);                       break;
         case 'upsertGamePrices':  result = upsertGamePrices(JSON.parse(e.postData.contents));  break;
         case 'appendPriceHistory': result = appendPriceHistory(JSON.parse(e.postData.contents)); break;
-        case 'logFetch':  result = logFetch(JSON.parse(e.postData.contents));  break;
+        case 'setRateLimitSnapshot': result = setRateLimitSnapshot(JSON.parse(e.postData.contents)); break;
         default:         result = { error: 'Unknown action: ' + action };
       }
     } catch (err) {
@@ -235,18 +235,56 @@ function deleteRow(id) {
   return { error: 'Row not found: ' + id };
 }
 
-// ── GG.deals rate-limit log: read entries from last hour ────
-function getRateLog() {
+// ── GG.deals rate-limit snapshot — one row, overwritten in place ──
+// GG.deals reports its own rate-limit state directly via response headers
+// (x-ratelimit-limit/-remaining/-reset — see the GG.deals proxy Worker,
+// which forwards them), which is authoritative straight from GG.deals
+// itself. That replaces the old approach here of appending a row per batch
+// and reconstructing "used this hour" client-side from a rolling window —
+// this sheet now just holds the single latest known snapshot so any
+// device's idle view can show it without making a live API call.
+function getRateLimitSnapshot() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(RATE_LOG_SHEET);
-  if (!sheet) return { entries: [] };
+  if (!sheet) return { limit: 0, remaining: null, resetAt: 0 };
   const rows = sheet.getDataRange().getValues();
-  if (rows.length < 2) return { entries: [] };
-  const oneHourAgo = Date.now() - 3600000;
-  const entries = rows.slice(1)
-    .filter(r => Number(r[0]) >= oneHourAgo)
-    .map(r => ({ ts: Number(r[0]), count: Number(r[1]) }));
-  return { entries };
+  if (rows.length < 2) return { limit: 0, remaining: null, resetAt: 0 };
+  const headers = rows[0].map(String);
+  const c = h => headers.indexOf(h);
+  if (c('remaining') === -1) return { limit: 0, remaining: null, resetAt: 0 }; // old per-batch-log schema, not migrated yet
+  const r = rows[1];
+  const remaining = r[c('remaining')];
+  return {
+    limit: Number(r[c('limit')]) || 0,
+    remaining: (remaining === '' || remaining == null) ? null : Number(remaining),
+    resetAt: Number(r[c('resetAt')]) || 0,
+  };
+}
+
+function setRateLimitSnapshot(snapshot) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(RATE_LOG_SHEET);
+  const wantHeaders = ['limit', 'remaining', 'resetAt', 'updatedAt'];
+  if (!sheet) {
+    sheet = ss.insertSheet(RATE_LOG_SHEET);
+    sheet.appendRow(wantHeaders);
+  } else {
+    // Migrate away from the old per-batch log schema (or any other
+    // unexpected state) — this sheet only ever needs one row now, so a full
+    // rewrite is simplest and also clears out any leftover logged rows.
+    const existingHeaders = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0].map(String);
+    if (existingHeaders.join('|') !== wantHeaders.join('|')) {
+      sheet.clearContents();
+      sheet.getRange(1, 1, 1, wantHeaders.length).setValues([wantHeaders]);
+    }
+  }
+  sheet.getRange(2, 1, 1, wantHeaders.length).setValues([[
+    snapshot.limit || 0,
+    snapshot.remaining != null ? snapshot.remaining : '',
+    snapshot.resetAt || 0,
+    Date.now(),
+  ]]);
+  return { ok: true };
 }
 
 // ── Read saved game prices ───────────────────────────────────────
@@ -377,24 +415,6 @@ function getLatestFetchDiffs() {
     }).sort((a, b) => b.fetched_at - a.fetched_at);
 }
 
-// ── GG.deals rate-limit log: append + prune rows older than 1h ──
-function logFetch(entry) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(RATE_LOG_SHEET);
-  if (!sheet) {
-    sheet = ss.insertSheet(RATE_LOG_SHEET);
-    sheet.appendRow(['ts', 'count']);
-  }
-  const rows = sheet.getDataRange().getValues();
-  const oneHourAgo = Date.now() - 3600000;
-  const keep = rows.slice(1).filter(r => Number(r[0]) >= oneHourAgo);
-  keep.push([entry.ts, entry.count]);
-  sheet.clearContents();
-  sheet.getRange(1, 1, 1, 2).setValues([rows[0] || ['ts', 'count']]);
-  if (keep.length) sheet.getRange(2, 1, keep.length, 2).setValues(keep);
-  return { ok: true };
-}
-
 // ── Upsert GamePrices + compute personal lows ────────────────
 function upsertGamePrices(entries) {
   if (!Array.isArray(entries) || !entries.length) return { ok: true, newLows: [] };
@@ -492,6 +512,71 @@ function appendPriceHistory(entries) {
   ]);
   sheet.getRange(lastRow + 1, 1, rows.length, 8).setValues(rows);
   return { ok: true };
+}
+
+// ── ONE-TIME MAINTENANCE — NOT wired to doGet/doPost, run manually ──
+// compactPriceHistory()
+//
+// PriceHistory was append-only from the start: every live-price run wrote a
+// row for every tracked game whether its price changed or not, so a game
+// sitting at the same price for months got an identical row on every single
+// check — that's what grew this sheet into tens of thousands of rows and
+// slowed things down. New rows are no longer written for unchanged prices
+// (see the dedup in app.js's runGGDealsFetch), but that only stops the
+// sheet from growing further — it doesn't shrink what's already there. This
+// applies the same rule retroactively: for each game, collapses consecutive
+// rows with identical retail+keyshop values down to just the first one (the
+// moment the price *became* that value), which is all the chart or the
+// new-low diffing ever needed anyway.
+//
+// BACK UP THE SHEET FIRST (File → Make a copy, or duplicate the
+// PriceHistory tab) — this clears and rewrites the sheet in place and
+// cannot be undone via Sheets' undo history once the script finishes.
+//
+// Run it from the Apps Script editor: select compactPriceHistory in the
+// function dropdown and click Run. Check View → Logs afterward for the
+// before/after row counts.
+function compactPriceHistory() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(PRICE_HISTORY_SHEET);
+  if (!sheet) { Logger.log('No PriceHistory sheet found — nothing to do.'); return; }
+
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) { Logger.log('PriceHistory is empty — nothing to do.'); return; }
+  const headers = data[0].map(String);
+  const c = h => headers.indexOf(h);
+  const hasNewLowCol = c('is_new_low') !== -1;
+
+  const byAppid = {};
+  data.slice(1).forEach(r => {
+    const appid = String(r[c('appid')]);
+    (byAppid[appid] = byAppid[appid] || []).push({
+      appid, title: r[c('title')], fetched_at: Number(r[c('fetched_at')]) || 0,
+      retail: parseFloat(r[c('retail')]) || 0, keyshop: parseFloat(r[c('keyshop')]) || 0,
+      currency: r[c('currency')], isNewLow: hasNewLowCol ? !!Number(r[c('is_new_low')]) : false,
+    });
+  });
+
+  const kept = [];
+  Object.keys(byAppid).forEach(appid => {
+    const rows = byAppid[appid].sort((a, b) => a.fetched_at - b.fetched_at);
+    let last = null;
+    rows.forEach(r => {
+      const changed = !last || Math.abs(r.retail - last.retail) > 0.005 || Math.abs(r.keyshop - last.keyshop) > 0.005;
+      if (changed) { kept.push(r); last = r; }
+    });
+  });
+  kept.sort((a, b) => a.fetched_at - b.fetched_at); // preserve chronological tail order getLatestFetchDiffs relies on
+
+  const rows = kept.map((r, i) => [
+    i + 1, r.appid, r.title, r.fetched_at, r.retail || '', r.keyshop || '', r.currency, r.isNewLow ? 1 : 0
+  ]);
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, 8).setValues([['id','appid','title','fetched_at','retail','keyshop','currency','is_new_low']]);
+  if (rows.length) sheet.getRange(2, 1, rows.length, 8).setValues(rows);
+
+  Logger.log('PriceHistory compacted: %s rows -> %s rows (%s removed).', data.length - 1, rows.length, (data.length - 1) - rows.length);
 }
 
 // ── Helper: get or create sheet tab ─────────────────────────
