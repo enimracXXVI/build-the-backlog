@@ -5966,14 +5966,18 @@ document.querySelectorAll('#ggFilterRow .fbar-pill').forEach(btn=>{
   btn.onclick=()=>_ggSetCardFilter(btn.dataset.filter);
 });
 
-// GG.deals reports its own rate-limit state directly via response headers
-// (x-ratelimit-limit/-remaining/-reset — see GG_WORKER, which forwards
-// them) — authoritative, straight from GG.deals, and it accounts for things
-// a client-side reconstruction can't: e.g. an invalid request still counting
-// against the limit, or the same API key being used from somewhere outside
-// this app. Persisted as a single overwritten snapshot (not an append-
-// forever log) so any device's idle view can show the last known budget
-// without making a live API call itself.
+// GG.deals reports rate-limit state via response headers (x-ratelimit-
+// limit/-remaining/-reset — see GG_WORKER, which forwards them), but
+// empirically this describes the 100/minute window (limit comes back as
+// 100, not 1000) — there's no header exposing the 1000/hour budget, so this
+// is informational only (e.g. for the idle view's "as of last check, X
+// left"). It must NEVER gate whether a run is attempted — see
+// runGGDealsFetch, which used to compare a batch's size against this and
+// wrongly aborted brand-new runs on stale/mis-scoped data; the hourly cap is
+// now handled reactively there (stop when GG.deals actually rejects a
+// request) instead of predicted from this. Persisted as a single
+// overwritten snapshot (not an append-forever log) so any device can show
+// the last known state without making a live API call itself.
 async function ggRateBudget(){
   if(!SHEET_URL)return{remaining:null,resetAt:0,limit:0};
   try{
@@ -5989,10 +5993,10 @@ async function ggRateBudget(){
 // Reads the rate-limit headers off one GG_WORKER response, or null if
 // they're missing (an older worker deploy, or a network layer that
 // stripped them — callers should keep using the last known snapshot then).
-// x-ratelimit-reset's exact format isn't documented (unix seconds vs. ms vs.
-// an ISO string) — this sniffs the value's shape rather than assuming, but
-// should be double-checked against a real response once live and adjusted
-// here if it turns out to guess wrong.
+// x-ratelimit-reset's exact format still isn't confirmed (unix seconds vs.
+// ms vs. an ISO string) — this sniffs the value's shape rather than
+// assuming. Since nothing here gates run behavior anymore (see above), a
+// wrong guess only affects the displayed reset time, not correctness.
 function _ggParseRateHeaders(res){
   const remaining=res.headers.get('x-ratelimit-remaining');
   if(remaining==null||isNaN(Number(remaining)))return null;
@@ -6229,30 +6233,42 @@ async function runGGDealsFetch(resumeState){
   history.pushState({ggFetchOpen:true},'','');
   setProgress('Starting…');
 
-  // Seeded from the last known snapshot (shared across devices via the
-  // sheet), then kept fresh from this run's own responses as they arrive —
-  // see _ggParseRateHeaders. remaining:null means "never seen a real
-  // header yet" (e.g. brand new setup) — treated as "don't know, don't
-  // block" rather than as zero.
+  // Purely informational — the last known snapshot, possibly from hours or
+  // days ago. It must never gate whether this run is even attempted (see
+  // the bug this replaced: comparing a fresh batch's size against a stale
+  // leftover "remaining" aborted brand-new runs with 0 games checked). The
+  // x-ratelimit-* headers also turned out, empirically, to describe
+  // GG.deals' 100/minute window (limit came back as 100, not 1000) —
+  // already structurally respected by the fixed batch size/delay below —
+  // not the 1000/hour cap, so there's no reliable pre-run hourly signal to
+  // check anyway. The hourly cap is instead handled reactively: if GG.deals
+  // actually rejects a request for it, we stop there.
   let rateInfo=await ggRateBudget();
   _ggRenderRateInfo(rateInfo.remaining,rateInfo.resetAt,rateInfo.limit);
   let rateLimited=false;
 
   for(let b=0;b<batches.length&&!_ggFetchCancelled;b++){
     const batch=batches[b];
-    if(SHEET_URL&&rateInfo.remaining!=null&&batch.length>rateInfo.remaining){
-      rateLimited=true;
-      setProgress(`GG.deals hourly limit reached — ${fetched} of ${total} checked, ${total-fetched} left for next hour.`);
-      break;
-    }
     setProgress(`Fetching batch ${b+1} of ${batches.length}…`);
     try{
       const ids=batch.map(g=>g.steamAppId).join(',');
       const res=await fetchWithTimeout(`${GG_WORKER}?ids=${encodeURIComponent(ids)}&region=it&_=${Date.now()}`,30000);
+      if(res.status===429){
+        rateLimited=true;
+        setProgress(`GG.deals rate limit reached — ${fetched} of ${total} checked, ${total-fetched} left for later.`);
+        break;
+      }
       if(!res.ok)throw new Error(`HTTP ${res.status}`);
       const freshRate=_ggParseRateHeaders(res);
       const json=await res.json();
-      if(json.error)throw new Error(json.error);
+      if(json.error){
+        if(/rate.?limit/i.test(json.error)){
+          rateLimited=true;
+          setProgress(`GG.deals rate limit reached — ${fetched} of ${total} checked, ${total-fetched} left for later.`);
+          break;
+        }
+        throw new Error(json.error);
+      }
       if(!json.success)throw new Error('GG.deals API returned an error');
       const fetchTs=Date.now();
 
@@ -6374,7 +6390,7 @@ async function runGGDealsFetch(resumeState){
     progressEl.textContent=`${fetched} / ${total} fetched`;
     barEl.style.width=`${total>0?Math.round(fetched/total*100):0}%`;
     // Left in localStorage on purpose — picks back up automatically once the
-    // hourly rate limit window rolls over, without re-billing already-fetched games.
+    // rate limit window rolls over, without re-billing already-fetched games.
   }else{
     progressEl.textContent=`${fetched} / ${total} fetched`;
     barEl.style.width='100%';
