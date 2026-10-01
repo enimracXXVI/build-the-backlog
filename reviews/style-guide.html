@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Build the Backlog — Full Style Guide</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+.audit-wrap{max-width:1280px;margin:0 auto;padding:2rem 1.2rem 6rem;font-family:'Inter',sans-serif}
+.audit-h1{font-family:'Rajdhani',sans-serif;font-size:1.9rem;font-weight:700;color:var(--text);margin-bottom:.3rem}
+.audit-sub{color:var(--t2);font-size:.9rem;margin-bottom:1.4rem;max-width:900px;line-height:1.5}
+.audit-toc{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;font-size:.75rem}
+.audit-toc a{color:var(--blue);border:1px solid var(--bd2);border-radius:99px;padding:.25rem .65rem}
+.audit-note{font-size:.72rem;color:var(--amber);background:#f7cd2610;border:1px solid #f7cd2640;border-radius:6px;padding:.5rem .8rem;margin-bottom:2rem;line-height:1.6}
+.audit-note a{color:var(--blue)}
+
+.type-sec{margin-bottom:3rem}
+.type-hdr{display:flex;align-items:baseline;gap:.8rem;border-bottom:2px solid var(--bd2);padding-bottom:.5rem;margin-bottom:.8rem}
+.type-hdr h2{font-family:'Rajdhani',sans-serif;font-size:1.7rem;font-weight:700;color:var(--text)}
+.type-desc{color:var(--t2);font-size:.85rem;line-height:1.6;max-width:900px;margin-bottom:1rem}
+.type-diff{background:var(--s1);border:1px solid var(--bd2);border-radius:var(--r);padding:.8rem 1rem;margin-bottom:1.2rem;font-size:.8rem;color:var(--t2);line-height:1.6}
+.type-diff b{color:var(--text)}
+.type-where{font-size:.78rem;color:var(--t3);margin-bottom:1.6rem}
+
+.subcat{background:var(--s1);border:1px solid var(--bd2);border-radius:var(--rl);padding:1.1rem 1.3rem;margin-bottom:1.4rem}
+.subcat-title{font-family:'Rajdhani',sans-serif;font-size:1.15rem;font-weight:700;color:var(--blue);margin-bottom:.25rem}
+.subcat-why{font-size:.78rem;color:var(--t2);line-height:1.55;margin-bottom:1rem}
+.subcat-why b{color:var(--text)}
+
+.states-block{background:#02b3fc0a;border:1px solid var(--bd2);border-radius:var(--r);padding:.8rem .9rem;margin-bottom:1rem}
+.states-hdr{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;color:var(--blue);margin-bottom:.15rem}
+.states-note{font-size:.7rem;color:var(--t2);margin-bottom:.6rem;line-height:1.5}
+.states-note code{color:var(--amber)}
+
+.el-block{background:var(--base);border:1px solid var(--bd);border-radius:var(--r);padding:.8rem .9rem;margin-bottom:1rem}
+.el-block:last-child{margin-bottom:0}
+.el-hdr{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.15rem}
+.el-hdr-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.92rem;color:var(--text)}
+.el-hdr-class{font-family:monospace;font-size:.68rem;color:var(--t3)}
+.el-hdr-usage{font-size:.7rem;color:var(--t2);margin-bottom:.6rem;line-height:1.5}
+.el-hdr-usage code{color:var(--amber)}
+
+.v-table{width:100%;border-collapse:collapse;font-size:.74rem}
+.v-table th{text-align:left;color:var(--t3);font-family:'Rajdhani',sans-serif;font-size:.62rem;letter-spacing:.05em;
+  text-transform:uppercase;padding:.3rem .5rem;border-bottom:1px solid var(--bd)}
+.v-table td{padding:.4rem .5rem;border-bottom:1px solid var(--bd);color:var(--text);vertical-align:middle}
+.v-table tr:last-child td{border-bottom:none}
+.v-name{font-weight:600;white-space:nowrap}
+.v-preview{min-width:110px}
+
+.hexcopy{font-family:monospace;font-size:.72rem;color:var(--text);background:var(--s1);border:1px solid var(--bd);
+  border-radius:4px;padding:2px 7px;cursor:pointer;transition:all .12s;white-space:nowrap;display:inline-block}
+.hexcopy:hover{border-color:var(--blue);color:var(--blue)}
+.hexcopy.copied{border-color:var(--green);color:var(--green);background:#9cff0015}
+.hexdash{color:var(--t3);font-family:monospace;font-size:.72rem}
+.varname{font-family:monospace;font-size:.68rem;color:var(--t3)}
+.v-note{font-size:.68rem;color:var(--t2);line-height:1.4}
+
+.on-cover{background:linear-gradient(135deg,#0a2a4a,#1a0a3a 55%,#031329);border-radius:6px;padding:.3rem .4rem;display:inline-block}
+.on-panel{background:var(--s1);border-radius:6px;padding:.5rem;display:inline-block}
+.on-base{background:var(--base);border-radius:6px;padding:.5rem;display:inline-block}
+
+/* token swatch */
+.tok-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.6rem;margin-bottom:1rem}
+.tok-card{background:var(--base);border:1px solid var(--bd);border-radius:var(--r);padding:.5rem;display:flex;flex-direction:column;gap:.35rem}
+.tok-swatch{height:36px;border-radius:6px;border:1px solid var(--bd)}
+.tok-name{font-family:monospace;font-size:.68rem;color:var(--t2)}
+.tok-role{font-size:.66rem;color:var(--t3);line-height:1.4}
+
+.quirk{font-size:.72rem;color:var(--amber);background:#f7cd2610;border:1px solid #f7cd2640;border-radius:6px;padding:.5rem .7rem;margin-top:.6rem;line-height:1.55}
+.quirk b{color:var(--text)}
+</style>
+</head>
+<body style="overflow:auto;height:auto;display:block">
+<div class="audit-wrap">
+  <h1 class="audit-h1">Build the Backlog — Full Style Guide</h1>
+  <p class="audit-sub">Every reusable UI element in the app that <b>isn't</b> a Pill, Badge, Chip, or Stat — design tokens, buttons, form controls, and every structural component (header, cards, sidebar, modals, side panel, calendar, feedback/overlay UI). Click any hex code to copy it. Rendered with the app's real <code>style.css</code>, so colors/spacing/type are exact.</p>
+
+  <div class="audit-note">Pill / Badge / Chip / Stat already have their own dedicated, exhaustive reference: <a href="pills-badges-chips-stats-reference.html">pills-badges-chips-stats-reference.html</a> — that stays the source of truth for those four categories per <code>CLAUDE.md</code>. This guide cross-links to it rather than duplicating it, and covers everything else in the app.</div>
+
+  <div class="audit-toc">
+    <a href="#tokens">Design Tokens</a><a href="#typography">Typography</a><a href="#buttons">Buttons</a>
+    <a href="#forms">Form Controls</a><a href="#header">Header</a><a href="#card">Game / Collection Card</a>
+    <a href="#sidebar">Filter Sidebar</a><a href="#modal">Modals</a><a href="#panel">Side Panel</a>
+    <a href="#calendar">Calendar</a><a href="#feedback">Overlays &amp; Feedback</a>
+  </div>
+
+  <!-- ══════════════════════ DESIGN TOKENS ══════════════════════ -->
+  <div class="type-sec" id="tokens">
+    <div class="type-hdr"><h2>Design Tokens</h2></div>
+    <p class="type-desc">Every CSS custom property defined in <code>:root</code>, plus the radius/type scale the rest of the app builds on. These are the raw values — component-level colors (platform colors, play-status colors, priority colors) live in the Pill/Badge/Chip/Stat reference since they only ever appear <i>through</i> those elements.</p>
+
+    <div class="subcat">
+      <div class="subcat-title">Color</div>
+      <div class="tok-grid">
+        <div class="tok-card"><div class="tok-swatch" style="background:#031329"></div><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span><span class="tok-name">--base</span><span class="tok-role">Page background; also the default text color painted on top of bright fills (pill/badge "on" text)</span></div>
+        <div class="tok-card"><div class="tok-swatch" style="background:#0d1e33"></div><span class="hexcopy" onclick="copyHex(this,'#0d1e33')">#0d1e33</span><span class="tok-name">--s1 / --cbg</span><span class="tok-role">Surface 1 — panels, sidebar, modal, card background</span></div>
+        <div class="tok-card"><div class="tok-swatch" style="background:#353e46"></div><span class="hexcopy" onclick="copyHex(this,'#353e46')">#353e46</span><span class="tok-name">--s3</span><span class="tok-role">Surface 3 — thumbnail placeholders, scrollbar thumb, "Removed" badge fill</span></div>
+        <div class="tok-card"><div class="tok-swatch" style="background:#14528f55"></div><span class="hexcopy" onclick="copyHex(this,'#14528f55')">#14528f55</span><span class="tok-name">--cbr / --bd</span><span class="tok-role">Card border (--cbr) is the same translucent blue as the default border token (--bd is <code>#14528f44</code>, one alpha step lighter)</span></div>
+        <div class="tok-card"><div class="tok-swatch" style="background:#02b3fc44"></div><span class="hexcopy" onclick="copyHex(this,'#02b3fc44')">#02b3fc44</span><span class="tok-name">--bd2</span><span class="tok-role">Emphasis border — focused/hovered panels, modal, active card border tint</span></div>
+        <div class="tok-card"><div class="tok-swatch" style="background:#02b3fc"></div><span class="hexcopy" onclick="copyHex(this,'#02b3fc')">#02b3fc</span><span class="tok-name">--blue / --cyan</span><span class="tok-role">Primary accent — links, focus rings, primary buttons, "High" priority</span></div>
+        <div class="tok-card"><div class="tok-swatch" style="background:#ff00aa"></div><span class="hexcopy" onclick="copyHex(this,'#ff00aa')">#ff00aa</span><span class="tok-name">--pink / --magenta</span><span class="tok-role">Danger accent — remove/delete actions, "Medium" priority</span></div>
+        <div class="tok-card"><div class="tok-swatch" style="background:#9cff00"></div><span class="hexcopy" onclick="copyHex(this,'#9cff00')">#9cff00</span><span class="tok-name">--green / --lime</span><span class="tok-role">Success accent — bought/owned, add/confirm actions, "Low" priority</span></div>
+        <div class="tok-card"><div class="tok-swatch" style="background:#f7cd26"></div><span class="hexcopy" onclick="copyHex(this,'#f7cd26')">#f7cd26</span><span class="tok-name">--amber</span><span class="tok-role">Warning accent — hotness, pre-order, "to review"</span></div>
+        <div class="tok-card"><div class="tok-swatch" style="background:#b3b3b3"></div><span class="hexcopy" onclick="copyHex(this,'#b3b3b3')">#b3b3b3</span><span class="tok-name">--muted</span><span class="tok-role">Muted/disabled-adjacent text (e.g. "Removed" badge text)</span></div>
+        <div class="tok-card"><div class="tok-swatch" style="background:#e8f4ff"></div><span class="hexcopy" onclick="copyHex(this,'#e8f4ff')">#e8f4ff</span><span class="tok-name">--text</span><span class="tok-role">Primary text</span></div>
+        <div class="tok-card"><div class="tok-swatch" style="background:#8aabcc"></div><span class="hexcopy" onclick="copyHex(this,'#8aabcc')">#8aabcc</span><span class="tok-name">--t2</span><span class="tok-role">Secondary text — body copy, labels, descriptions</span></div>
+        <div class="tok-card"><div class="tok-swatch" style="background:#4a6280"></div><span class="hexcopy" onclick="copyHex(this,'#4a6280')">#4a6280</span><span class="tok-name">--t3</span><span class="tok-role">Tertiary text — section labels, placeholders, disabled icons</span></div>
+      </div>
+      <div class="quirk"><b>Alias quirk:</b> <span class="varname">--blue</span>/<span class="varname">--cyan</span>, <span class="varname">--pink</span>/<span class="varname">--magenta</span>, and <span class="varname">--green</span>/<span class="varname">--lime</span> are three pairs of <i>different variable names pointing at identical hex values</i>. <span class="varname">--cyan/--magenta/--lime</span> are used specifically by the Priority pill/badge family; <span class="varname">--blue/--pink/--green</span> are used everywhere else. They will always be in sync since they share a literal, but if you ever repoint one without the other you'll get a silent mismatch.</div>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Radius scale</div>
+      <div class="subcat-why">Only two radii are actually tokenized. Everything else — including the values that define Pill/Badge/Chip shape — is a hardcoded literal repeated across many rules rather than a shared variable.</div>
+      <table class="v-table">
+        <tr><th>Token / literal</th><th>Value</th><th>Preview</th><th>Used for</th></tr>
+        <tr><td class="varname">--r</td><td class="varname">10px</td><td><div style="width:60px;height:28px;background:var(--base);border:1px solid var(--bd);border-radius:var(--r)"></div></td><td class="v-note">Inputs, header search, standard buttons, small cards, modal field rows</td></tr>
+        <tr><td class="varname">--rl</td><td class="varname">16px</td><td><div style="width:60px;height:28px;background:var(--base);border:1px solid var(--bd);border-radius:var(--rl)"></div></td><td class="v-note">Modal, side panel edge, game card, sidebar bottom-sheet (mobile)</td></tr>
+        <tr><td class="v-note">literal <code>4px</code></td><td class="varname">4px</td><td><div style="width:60px;height:28px;background:var(--s3);border-radius:4px"></div></td><td class="v-note">Badge shape (all badges, no variable — see Badge reference)</td></tr>
+        <tr><td class="v-note">literal <code>5–7px</code></td><td class="varname">5–7px</td><td><div style="width:60px;height:28px;background:var(--base);border:1px solid var(--bd);border-radius:6px"></div></td><td class="v-note">Small icon buttons (<span class="el-hdr-class">.qb</span>, <span class="el-hdr-class">.pa</span>, <span class="el-hdr-class">.note-btn</span>, dropdown items)</td></tr>
+        <tr><td class="v-note">literal <code>20px</code></td><td class="varname">20px</td><td><div style="width:60px;height:28px;background:transparent;border:1.5px solid var(--bd);border-radius:20px"></div></td><td class="v-note">Pill shape (no variable — see Pill reference)</td></tr>
+        <tr><td class="v-note">literal <code>99px</code></td><td class="varname">99px</td><td><div style="width:60px;height:28px;background:var(--s3);border-radius:99px"></div></td><td class="v-note">Chip shape, FAB buttons, mode toggle track (no variable — see Chip reference)</td></tr>
+      </table>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Layout tokens</div>
+      <table class="v-table">
+        <tr><th>Token</th><th>Value</th><th>Used for</th></tr>
+        <tr><td class="varname">--pw</td><td class="varname">600px</td><td class="v-note">Side panel width (desktop). Becomes <code>100vw</code> under the 560px breakpoint.</td></tr>
+        <tr><td class="varname">--hh</td><td class="varname">60px</td><td class="v-note">Header height — also used to position the hamburger dropdown menus (<code>top:var(--hh)</code>)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ TYPOGRAPHY ══════════════════════ -->
+  <div class="type-sec" id="typography">
+    <div class="type-hdr"><h2>Typography</h2></div>
+    <p class="type-desc">Two typefaces, used for two distinct jobs — never mixed within one element.</p>
+    <div class="subcat">
+      <table class="v-table">
+        <tr><th>Typeface</th><th>Preview</th><th>Role</th></tr>
+        <tr><td class="v-name">Inter</td><td style="font-family:'Inter',sans-serif;font-weight:300">The quick brown fox</td>
+          <td class="v-note">Body font, weight <b>300</b> by default. Used for all prose, form values, descriptions, tooltips.</td></tr>
+        <tr><td class="v-name">Rajdhani</td><td style="font-family:'Rajdhani',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.04em">The quick brown fox</td>
+          <td class="v-note">Display font, weight <b>700</b>, usually uppercase with <code>.04em</code> letter-spacing. Used for card titles, section labels, buttons that need emphasis (Pills, modal titles, panel title, priority accents), and every all-caps microcopy label.</td></tr>
+      </table>
+      <div class="quirk">Card title (<span class="el-hdr-class">.ct</span>), panel title (<span class="el-hdr-class">.pt</span>), modal title (<span class="el-hdr-class">.mt</span>), and section labels (<span class="el-hdr-class">.sl</span>, <span class="el-hdr-class">.psl</span>) all use Rajdhani but at very different sizes (.9rem / 1.35rem / 1.15rem / .66rem) — there's no shared "heading scale," each context sets its own size.</div>
+    </div>
+    <div class="subcat">
+      <div class="subcat-title">Common sizes</div>
+      <table class="v-table">
+        <tr><th>Size</th><th>Preview</th><th>Where</th></tr>
+        <tr><td class="varname">.56rem</td><td style="font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em">BADGE TEXT</td><td class="v-note">All badge text, DLC-count/collection-type badges</td></tr>
+        <tr><td class="varname">.6–.68rem</td><td style="font-size:.62rem;color:var(--t3)">Micro labels, timestamps, hints</td><td class="v-note">Section labels, kb-shortcut popover, tooltips</td></tr>
+        <tr><td class="varname">.7–.8rem</td><td style="font-size:.78rem">Body copy, buttons, form values</td><td class="v-note">Most interactive UI text</td></tr>
+        <tr><td class="varname">.82–.9rem</td><td style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.9rem">Card Title</td><td class="v-note">Game/collection card titles</td></tr>
+        <tr><td class="varname">1.15–1.35rem</td><td style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem">Panel / Modal Title</td><td class="v-note">Side panel (1.35rem), modal (1.15rem)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ BUTTONS ══════════════════════ -->
+  <div class="type-sec" id="buttons">
+    <div class="type-hdr"><h2>Buttons</h2></div>
+    <p class="type-desc">Every clickable button family that isn't a Pill (Pills pick a value; these trigger an action or navigate). Grouped by where they live.</p>
+
+    <div class="subcat">
+      <div class="subcat-title">Header Button</div>
+      <div class="subcat-why"><b>Class:</b> <span class="el-hdr-class">.hb</span> · <b>Where:</b> header bar (Calendar, shortcuts help, hamburger, mode toggle wrapper, Add game)</div>
+      <table class="v-table">
+        <tr><th>Variant</th><th>Preview</th><th>Background</th><th>Border</th><th>Text</th></tr>
+        <tr><td class="v-name">Default</td><td class="v-preview"><button class="hb">Default</button></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#353e46')">#353e46</span></td><td class="varname">var(--bd)</td><td class="varname">var(--t2)</td></tr>
+        <tr><td class="v-name">Default — hover</td><td class="v-preview"><button class="hb" style="border-color:#02b3fc;color:#02b3fc">Default</button></td>
+          <td class="hexdash">unchanged</td><td class="varname">var(--blue)</td><td class="varname">var(--blue)</td></tr>
+        <tr><td class="v-name">Primary <code>.p</code></td><td class="v-preview"><button class="hb p">＋ Add game</button></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc')">#02b3fc</span></td><td class="varname">var(--blue)</td><td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span></td></tr>
+        <tr><td class="v-name">Primary — hover</td><td class="v-preview"><button class="hb p" style="opacity:.85">＋ Add game</button></td>
+          <td class="v-note" colspan="3">opacity <span class="varname">.85</span>, text stays <span class="hexdash">#031329</span></td></tr>
+        <tr><td class="v-name">Accent <code>.accent</code></td><td class="v-preview"><button class="hb accent">Calendar</button></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc18')">#02b3fc18</span></td><td><span class="hexcopy" onclick="copyHex(this,'#02b3fc66')">#02b3fc66</span></td><td class="varname">var(--blue)</td></tr>
+        <tr><td class="v-name">Accent — hover</td><td class="v-preview"><button class="hb accent" style="background:#02b3fc28;border-color:#02b3fc">Calendar</button></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc28')">#02b3fc28</span></td><td class="varname">var(--blue)</td><td class="varname">var(--blue)</td></tr>
+        <tr><td class="v-name">On/active <code>.on</code></td><td class="v-preview"><button class="hb on">Active</button></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc18')">#02b3fc18</span></td><td class="varname">var(--blue)</td><td class="varname">var(--blue), weight 700</td></tr>
+      </table>
+      <div class="quirk"><b>One-off variant:</b> <code>#steamWishlistToggle</code> is styled as its own bespoke accent tier (dimmer resting state, <code>#02b3fc0a</code>/<code>#02b3fc44</code>/<code>#02b3fc88</code>) with an extra-bright <code>.accent</code> override — it doesn't reuse <span class="el-hdr-class">.hb.accent</span> as-is, it's targeted by ID on top of it.</div>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Mode Toggle</div>
+      <div class="subcat-why"><b>Classes:</b> <span class="el-hdr-class">.mode-tog</span> (track) + <span class="el-hdr-class">.mode-btn</span> (segment) · <b>Where:</b> header (Wishlist/Collection), desktop hamburger menu (Grid/List view)</div>
+      <table class="v-table">
+        <tr><th>State</th><th>Preview</th><th>Background</th><th>Text</th></tr>
+        <tr><td class="v-name">Track</td><td class="v-preview"><div class="mode-tog"><button class="mode-btn on">Wishlist</button><button class="mode-btn">Collection</button></div></td>
+          <td class="v-note" colspan="2">1px <span class="varname">var(--bd)</span> border, 99px-equivalent via <code>overflow:hidden</code> on a <span class="varname">var(--r)</span>-radius track, 30px tall</td></tr>
+        <tr><td class="v-name">Segment — off</td><td></td><td class="hexdash">transparent</td><td class="varname">var(--t2)</td></tr>
+        <tr><td class="v-name">Segment — off, hover</td><td></td><td class="hexdash">transparent</td><td class="varname">var(--blue)</td></tr>
+        <tr><td class="v-name">Segment — on</td><td></td><td><span class="hexcopy" onclick="copyHex(this,'#02b3fc')">#02b3fc</span></td><td><span class="hexcopy" onclick="copyHex(this,'#031329')">#031329</span>, weight 700</td></tr>
+      </table>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Modal Footer Button</div>
+      <div class="subcat-why"><b>Class:</b> <span class="el-hdr-class">.mb2</span> · <b>Where:</b> sticky action bar at the bottom of every modal (<code>.modal .ma</code>) — flex-equal-width tap targets, 44px tall, divided by 1px borders instead of gaps</div>
+      <div class="states-block">
+        <div class="states-hdr">Shared shape</div>
+        <div class="states-note">Every variant is edge-to-edge, no radius, no outer border — only a hairline <span class="varname">var(--bd)</span> divider between buttons and a top border separating the bar from the modal body. Hover uses an <code>inset box-shadow</code> "top stripe" in the accent color rather than a background swap (except the default variant, whose hover is just a lighter stripe in <span class="varname">var(--t2)</span>). Active/pressed (all variants): background <span class="hexcopy" onclick="copyHex(this,'#02b3fc33')">#02b3fc33</span>, text <span class="varname">var(--blue)</span>, <code>scale(.9)</code>.</div>
+      </div>
+      <table class="v-table">
+        <tr><th>Variant</th><th>Preview</th><th>Text (resting)</th><th>Hover stripe</th><th>Used for</th></tr>
+        <tr><td class="v-name">Default</td><td class="v-preview"><button class="mb2" style="border-left:none">Cancel</button></td>
+          <td class="varname">var(--t2)</td><td class="varname">var(--t2)</td><td class="v-note">Cancel / Close</td></tr>
+        <tr><td class="v-name"><code>.p</code> primary</td><td class="v-preview"><button class="mb2 p" style="border-left:none">Save game</button></td>
+          <td class="varname">var(--blue)</td><td class="varname">var(--blue)</td><td class="v-note">Save / confirm the main action</td></tr>
+        <tr><td class="v-name"><code>.add</code></td><td class="v-preview"><button class="mb2 add" style="border-left:none">Add to Collection</button></td>
+          <td class="varname">var(--green)</td><td class="varname">var(--green)</td><td class="v-note">Wishlist → Collection, Bought</td></tr>
+        <tr><td class="v-name"><code>.d</code> danger</td><td class="v-preview"><button class="mb2 d" style="border-left:none">Remove</button></td>
+          <td class="varname">var(--pink)</td><td class="varname">var(--pink)</td><td class="v-note">Remove, Move to Wishlist (destructive)</td></tr>
+        <tr><td class="v-name"><code>.warn</code></td><td class="v-preview"><button class="mb2 warn" style="border-left:none">Add to Collection</button></td>
+          <td class="varname">var(--amber)</td><td class="varname">var(--amber)</td><td class="v-note">Confirming an unusual state (pre-order / not-yet-released purchase)</td></tr>
+      </table>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Panel Action Button</div>
+      <div class="subcat-why"><b>Class:</b> <span class="el-hdr-class">.pa</span> · <b>Where:</b> side panel body (<span class="el-hdr-class">.pac</span> row) and sticky panel footer (<span class="el-hdr-class">.panel-footer .pac</span>, same tap-bar treatment as modal footer)</div>
+      <table class="v-table">
+        <tr><th>Variant</th><th>Preview</th><th>Text</th><th>Hover</th><th>Used for</th></tr>
+        <tr><td class="v-name">Default</td><td class="v-preview"><button class="pa" style="flex:none">Edit</button></td>
+          <td class="varname">var(--t3)</td><td class="varname">border/text → var(--blue)</td><td class="v-note">Neutral actions</td></tr>
+        <tr><td class="v-name"><code>.s</code> success</td><td class="v-preview"><button class="pa s" style="flex:none">↩ Reinstate</button></td>
+          <td class="varname">var(--green)</td><td class="v-note" colspan="2">border <span class="hexcopy" onclick="copyHex(this,'#9cff0066')">#9cff0066</span>, bg <span class="hexcopy" onclick="copyHex(this,'#9cff0011')">#9cff0011</span>; hover bg → <span class="hexcopy" onclick="copyHex(this,'#9cff0022')">#9cff0022</span></td></tr>
+        <tr><td class="v-name"><code>.d</code> danger — hover only</td><td class="v-preview"><button class="pa d" style="flex:none">Remove</button></td>
+          <td class="varname">var(--t3) at rest</td><td class="varname">border/text → var(--pink)</td><td class="v-note">Remove-from-list</td></tr>
+        <tr><td class="v-name">Panel footer variant</td><td class="v-preview"><div class="on-panel"><button class="pa" style="border-radius:0;border-left:none">Edit</button></div></td>
+          <td class="v-note" colspan="3">Same tap-bar restyle as modal footer buttons: 44px tall, no radius, no outer border, hover = colored inset top-stripe instead of a fill</td></tr>
+      </table>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Card Quick-Action Button</div>
+      <div class="subcat-why"><b>Class:</b> <span class="el-hdr-class">.qb</span> · <b>Where:</b> game/collection card, bottom action row (<span class="el-hdr-class">.cq</span>). Icon-only, built from the shared <code>IC</code> SVG icon set in <code>app.js</code>. Grid view renders them as a full-width, equal-height tap bar; list view keeps them as small individual squares.</div>
+      <table class="v-table">
+        <tr><th>Variant</th><th>Preview</th><th>Resting</th><th>Hover</th><th>Meaning</th></tr>
+        <tr><td class="v-name">Default</td><td class="v-preview"><button class="qb" style="position:static">✎</button></td>
+          <td class="v-note">border <span class="varname">var(--bd)</span>, icon <span class="varname">var(--t3)</span></td><td class="v-note">border/icon → <span class="varname">var(--blue)</span></td><td class="v-note">Edit, Steam link, gg.deals link</td></tr>
+        <tr><td class="v-name"><code>.qr</code> remove</td><td class="v-preview"><button class="qb qr" style="position:static">✕</button></td>
+          <td class="v-note">same as default</td><td class="v-note">border/icon → <span class="varname">var(--pink)</span></td><td class="v-note">Remove from wishlist</td></tr>
+        <tr><td class="v-name"><code>.qri</code> reinstate</td><td class="v-preview"><button class="qb qri" style="position:static">↻</button></td>
+          <td class="v-note">border <span class="hexcopy" onclick="copyHex(this,'#9cff0044')">#9cff0044</span>, icon <span class="varname">var(--green)</span></td><td class="v-note">border/icon → brighter <span class="varname">var(--green)</span></td><td class="v-note">Reinstate a removed game</td></tr>
+        <tr><td class="v-name"><code>.ba</code></td><td class="v-preview"><button class="qb ba" style="position:static">↩</button></td>
+          <td class="v-note">border <span class="hexcopy" onclick="copyHex(this,'#ff00aa66')">#ff00aa66</span>, icon <span class="varname">var(--pink)</span></td><td class="v-note">background tint <span class="hexcopy" onclick="copyHex(this,'#ff00aa11')">#ff00aa11</span></td><td class="v-note">Move collection game back to Wishlist</td></tr>
+        <tr><td class="v-name"><code>.qb-bt</code> mark bought</td><td class="v-preview"><button class="qb qb-bt" style="position:static">✓</button></td>
+          <td class="v-note">default resting</td><td class="v-note">border/icon → <span class="varname">var(--green)</span></td><td class="v-note">Mark as bought</td></tr>
+        <tr><td class="v-name"><code>.qb-ap</code> add platform</td><td class="v-preview"><button class="qb qb-ap" style="position:static">＋</button></td>
+          <td class="v-note">default resting</td><td class="v-note">border/icon → <span class="varname">var(--green)</span></td><td class="v-note">Add another platform purchase</td></tr>
+        <tr><td class="v-name">Active/pressed (all)</td><td class="v-preview"><button class="qb" style="position:static;background:#02b3fc33;border-color:#02b3fc;color:#02b3fc;transform:scale(.9)">✎</button></td>
+          <td class="v-note" colspan="3">bg <span class="hexcopy" onclick="copyHex(this,'#02b3fc33')">#02b3fc33</span>, border/icon <span class="varname">var(--blue)</span>, <code>scale(.9)</code></td></tr>
+      </table>
+      <div class="quirk">Grid view and list view render the same classes very differently: <b>grid</b> stretches <span class="el-hdr-class">.qb</span> into a full-width, borderless-outer, 40px-tall tap bar with dividers (icons scale to 16px); <b>list</b> keeps them as small standalone 22×22px rounded squares with their own border. Same class, same colors, deliberately different container per Consistency Law (layout differs, the element itself doesn't).</div>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Icon-only Buttons</div>
+      <div class="subcat-why">Small square/circle buttons that close, navigate, or clear something — one job each, no text label.</div>
+      <table class="v-table">
+        <tr><th>Element</th><th>Class</th><th>Preview</th><th>Resting</th><th>Hover</th></tr>
+        <tr><td class="v-name">Panel close</td><td class="el-hdr-class">.pcl</td><td class="v-preview"><div class="on-cover"><button class="pcl" style="position:static">✕</button></div></td>
+          <td class="v-note">bg <span class="hexcopy" onclick="copyHex(this,'#03132988')">#03132988</span>, border <span class="varname">var(--bd)</span>, icon <span class="varname">var(--t2)</span></td>
+          <td class="v-note">bg <span class="hexcopy" onclick="copyHex(this,'#02b3fc18')">#02b3fc18</span>, icon <span class="varname">var(--blue)</span></td></tr>
+        <tr><td class="v-name">Panel nav (prev/next)</td><td class="el-hdr-class">.pcnav-btn</td><td class="v-preview"><div class="on-cover"><button class="pcnav-btn" style="position:static">‹</button></div></td>
+          <td class="v-note">same as <span class="el-hdr-class">.pcl</span></td>
+          <td class="v-note">same as <span class="el-hdr-class">.pcl</span>; <code>:disabled</code> → opacity <span class="varname">.25</span></td></tr>
+        <tr><td class="v-name">External link (Steam/store)</td><td class="el-hdr-class">.pt-lnk</td><td class="v-preview"><button class="pt-lnk">🔗</button></td>
+          <td class="v-note">bg <span class="varname">var(--base)</span>, border <span class="varname">var(--bd)</span>, icon <span class="varname">var(--t3)</span></td>
+          <td class="v-note">border/icon → <span class="varname">var(--blue)</span></td></tr>
+        <tr><td class="v-name">Calendar TBA pager</td><td class="el-hdr-class">.tba-page-btn</td><td class="v-preview"><button class="tba-page-btn">‹</button></td>
+          <td class="v-note">bg transparent, border <span class="varname">var(--bd)</span>, icon <span class="varname">var(--t2)</span></td>
+          <td class="v-note">border/icon → <span class="varname">var(--blue)</span>; <code>:disabled</code> → opacity <span class="varname">.25</span></td></tr>
+        <tr><td class="v-name">Sidebar close</td><td class="el-hdr-class">.fbar-close</td><td class="v-preview"><button class="fbar-close">✕</button></td>
+          <td class="v-note">transparent, icon <span class="varname">var(--t3)</span></td>
+          <td class="v-note">bg <span class="hexcopy" onclick="copyHex(this,'#02b3fc18')">#02b3fc18</span>, icon <span class="varname">var(--text)</span></td></tr>
+        <tr><td class="v-name">Search clear</td><td class="el-hdr-class">.hs-clear</td><td class="v-preview"><button class="hs-clear visible">Clear</button></td>
+          <td class="v-note">transparent, border <span class="varname">var(--bd)</span>, text <span class="varname">var(--t3)</span></td>
+          <td class="v-note">border/text → <span class="varname">var(--pink)</span></td></tr>
+      </table>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Floating Action Buttons</div>
+      <table class="v-table">
+        <tr><th>Element</th><th>Class / ID</th><th>Preview</th><th>Background</th><th>Notes</th></tr>
+        <tr><td class="v-name">Filter FAB</td><td class="el-hdr-class">.fbar-fab</td><td class="v-preview"><button class="fbar-fab" style="position:static">☰</button></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc')">#02b3fc</span></td><td class="v-note">48px circle, icon <span class="hexdash">#031329</span>, red count badge (<span class="varname">var(--pink)</span>) top-right; <code>:active</code> → <code>scale(.92)</code></td></tr>
+        <tr><td class="v-name">Radial quick-actions</td><td class="el-hdr-class">#qfabBtn</td><td class="v-preview"><button style="position:static;width:44px;height:44px;border-radius:99px;background:#ff00aa;border:none;color:#fff;font-size:1.2rem">✕</button></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#ff00aa')">#ff00aa</span> resting</td><td class="v-note">rotates 45°, turns <span class="varname">var(--blue)</span> with dark icon when open (<code>.open</code>); child <span class="el-hdr-class">.qfab-item</span> bubbles use <span class="varname">var(--s1)</span>/<span class="varname">var(--bd2)</span> and arc into place</td></tr>
+        <tr><td class="v-name">Back to top</td><td class="el-hdr-class">#back-to-top</td><td class="v-preview"><button style="position:static;width:40px;height:40px;border-radius:50%;background:#0d1e33;border:1px solid #9cff0066;color:#9cff00">↑</button></td>
+          <td class="varname">var(--s1)</td><td class="v-note">border <span class="hexcopy" onclick="copyHex(this,'#9cff0066')">#9cff0066</span>, icon <span class="varname">var(--green)</span>; fades/slides in via <code>.visible</code></td></tr>
+      </table>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Notes System Buttons</div>
+      <table class="v-table">
+        <tr><th>Element</th><th>Class</th><th>Preview</th><th>Resting</th><th>Hover</th></tr>
+        <tr><td class="v-name">Save / Delete action</td><td class="el-hdr-class">.note-btn</td><td class="v-preview"><button class="note-btn">Edit</button></td>
+          <td class="v-note">border <span class="varname">var(--bd)</span>, text <span class="varname">var(--t3)</span></td><td class="v-note">border/text → <span class="varname">var(--blue)</span> (<code>.del</code> hover → <span class="varname">var(--pink)</span>)</td></tr>
+        <tr><td class="v-name"><code>.save</code> variant</td><td class="el-hdr-class">.note-btn.save</td><td class="v-preview"><button class="note-btn save">Save</button></td>
+          <td class="v-note">border/text <span class="varname">var(--blue)</span></td><td class="v-note">bg → <span class="varname">var(--blue)</span>, text → <span class="hexdash">#031329</span></td></tr>
+        <tr><td class="v-name">Add-note toggle</td><td class="el-hdr-class">.note-add-toggle</td><td class="v-preview"><button class="note-add-toggle" style="width:auto">+ Add note</button></td>
+          <td class="v-note">dashed <span class="varname">var(--bd)</span> border, text <span class="varname">var(--t3)</span></td><td class="v-note">border/text → <span class="varname">var(--blue)</span></td></tr>
+        <tr><td class="v-name">Save note (full width)</td><td class="el-hdr-class">.note-save-btn</td><td class="v-preview"><button class="note-save-btn" style="width:auto">Save note</button></td>
+          <td class="v-note">border <span class="varname">var(--bd)</span>, text <span class="varname">var(--t2)</span></td><td class="v-note">border/text → <span class="varname">var(--blue)</span></td></tr>
+      </table>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Sidebar-specific Buttons</div>
+      <table class="v-table">
+        <tr><th>Element</th><th>Class</th><th>Preview</th><th>Notes</th></tr>
+        <tr><td class="v-name">Section clear</td><td class="el-hdr-class">.fbar-sec-clear</td><td class="v-preview"><button class="fbar-sec-clear">Clear</button></td><td class="v-note">border <span class="varname">var(--bd)</span> → hover <span class="varname">var(--pink)</span></td></tr>
+        <tr><td class="v-name">AND/OR logic toggle</td><td class="el-hdr-class">.fbar-logic-btn</td><td class="v-preview"><div class="fbar-logic-tog"><button class="fbar-logic-btn on">AND</button><button class="fbar-logic-btn">OR</button></div></td><td class="v-note">Selected segment: bg <span class="varname">var(--blue)</span>, text <span class="hexdash">#031329</span></td></tr>
+        <tr><td class="v-name">Clear all filters</td><td class="el-hdr-class">.fbar-clearall</td><td class="v-preview"><div class="on-panel" style="padding:0"><button class="fbar-clearall" style="position:static;min-height:36px;line-height:36px">Clear all filters</button></div></td><td class="v-note">Full-width footer bar, text <span class="varname">var(--pink)</span>; hover = inset top-stripe (same idiom as modal/panel footer buttons); <code>:active</code> → bg <span class="hexcopy" onclick="copyHex(this,'#ff00aa33')">#ff00aa33</span>, <code>scale(.97)</code></td></tr>
+      </table>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">List-style Buttons</div>
+      <table class="v-table">
+        <tr><th>Element</th><th>Class</th><th>Preview</th><th>Notes</th></tr>
+        <tr><td class="v-name">Hamburger menu item</td><td class="el-hdr-class">.hmi</td><td class="v-preview"><div class="on-panel" style="padding:0;width:180px"><button class="hmi" style="border-top:none">Export data</button></div></td><td class="v-note">Full-width row, top-bordered, text <span class="varname">var(--t2)</span> → hover bg <span class="hexcopy" onclick="copyHex(this,'#02b3fc15')">#02b3fc15</span>, text <span class="varname">var(--text)</span></td></tr>
+        <tr><td class="v-name">Add-type picker row</td><td class="el-hdr-class">.add-pick-btn</td><td class="v-preview"><div class="on-panel" style="padding:0;width:180px"><button class="add-pick-btn"><span class="add-pick-title">Add game</span><br><span class="add-pick-sub">Search and add manually</span></button></div></td><td class="v-note">Block button, hover bg <span class="hexcopy" onclick="copyHex(this,'#02b3fc15')">#02b3fc15</span></td></tr>
+        <tr><td class="v-name">Store/status picker button</td><td class="el-hdr-class">.pick-btn</td><td class="v-preview"><div style="width:180px"><button class="pick-btn">Steam <span class="spb-arrow" style="margin-left:auto">▾</span></button></div></td><td class="v-note">Looks like a select; border <span class="varname">var(--bd)</span> → hover <span class="varname">var(--blue)</span>, opens a <span class="el-hdr-class">.pick-dd</span> dropdown</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ FORM CONTROLS ══════════════════════ -->
+  <div class="type-sec" id="forms">
+    <div class="type-hdr"><h2>Form Controls</h2></div>
+    <p class="type-desc">Text entry, selection, and rating inputs used across the Add/Edit modal, side panel notes, and sidebar search.</p>
+
+    <div class="subcat">
+      <div class="subcat-title">Text Input / Select / Textarea</div>
+      <div class="subcat-why"><b>Class:</b> <span class="el-hdr-class">.fr input / .fr select / .fr textarea</span> · <b>Where:</b> Add/Edit modal form rows</div>
+      <table class="v-table">
+        <tr><th>State</th><th>Preview</th><th>Background</th><th>Border</th><th>Text</th></tr>
+        <tr><td class="v-name">Resting</td><td class="v-preview"><input class="fr-demo" style="width:140px;background:var(--base);border:1px solid var(--bd);border-radius:var(--r);padding:.42rem .65rem;color:var(--text);font-size:.78rem" value="Hades II"></td>
+          <td class="varname">var(--base)</td><td class="varname">var(--bd)</td><td class="varname">var(--text)</td></tr>
+        <tr><td class="v-name">Focus</td><td class="v-preview"><input class="fr-demo" style="width:140px;background:var(--base);border:1px solid #02b3fc;border-radius:var(--r);padding:.42rem .65rem;color:var(--text);font-size:.78rem" value="Hades II"></td>
+          <td class="varname">var(--base)</td><td class="varname">var(--blue)</td><td class="varname">var(--text)</td></tr>
+        <tr><td class="v-name">Error <code>.err</code></td><td class="v-preview"><input class="fr-demo" style="width:140px;background:var(--base);border:1px solid #ff00aa;border-radius:var(--r);padding:.42rem .65rem;color:var(--text);font-size:.78rem" value=""></td>
+          <td class="varname">var(--base)</td><td class="varname">var(--pink)</td><td class="varname">var(--text)</td></tr>
+        <tr><td class="v-name">Field label</td><td class="v-preview"><label style="font-size:.63rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#4a6280">Release date</label></td>
+          <td colspan="3" class="v-note">Uppercase, <span class="varname">var(--t3)</span>; required marker <span class="el-hdr-class">.req</span> is <span class="varname">var(--pink)</span> superscript ("mandatory")</td></tr>
+        <tr><td class="v-name">Inline error text</td><td class="v-preview"><span style="font-size:.63rem;color:#ff00aa">This field is required</span></td>
+          <td colspan="3" class="v-note"><span class="el-hdr-class">.ferr.on</span> — hidden by default, shown under the invalid field</td></tr>
+      </table>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Search Bars</div>
+      <table class="v-table">
+        <tr><th>Element</th><th>Class</th><th>Preview</th><th>Notes</th></tr>
+        <tr><td class="v-name">Header search</td><td class="el-hdr-class">.hs input</td><td class="v-preview"><div class="hs" style="position:relative;width:180px"><input style="width:100%;background:var(--base);border:1px solid var(--bd);border-radius:var(--r);padding:.36rem .8rem;color:var(--text);font-size:.78rem" placeholder="Search…"></div></td><td class="v-note">Same resting/focus pattern as <span class="el-hdr-class">.fr input</span> (focus border → <span class="varname">var(--blue)</span>); leading search icon <span class="varname">var(--t3)</span></td></tr>
+        <tr><td class="v-name">Sidebar section search</td><td class="el-hdr-class">.fbar-search</td><td class="v-preview"><input style="width:140px;background:var(--base);border:1px solid var(--bd);border-radius:5px;padding:.22rem .45rem;color:var(--text);font-size:.72rem" placeholder="Filter…"></td><td class="v-note">Smaller/denser than <span class="el-hdr-class">.hs</span>, same focus behavior</td></tr>
+      </table>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Tag Input Wrapper</div>
+      <div class="subcat-why"><b>Class:</b> <span class="el-hdr-class">.ciw</span> (wrapper) + <span class="el-hdr-class">.cir</span> (bare inline text input) — the container that Tag Chips (<span class="el-hdr-class">.cich</span>, documented in the Chip reference) live inside of.</div>
+      <table class="v-table">
+        <tr><th>State</th><th>Preview</th><th>Border</th></tr>
+        <tr><td class="v-name">Resting</td><td class="v-preview"><div class="ciw" style="width:160px"><span class="cich">Metroidvania<button>✕</button></span></div></td><td class="varname">var(--bd)</td></tr>
+        <tr><td class="v-name">Focus-within</td><td class="v-preview"><div class="ciw" style="width:160px;border-color:#02b3fc"><span class="cich">Metroidvania<button>✕</button></span></div></td><td class="varname">var(--blue)</td></tr>
+      </table>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Sidebar Filter Checkbox</div>
+      <div class="subcat-why"><b>Class:</b> <span class="el-hdr-class">.fbar-opt</span> (row) + <span class="el-hdr-class">.fbar-opt-check</span> (box) · <b>Where:</b> multi-select filter lists (genre, developer, publisher…) inside the sidebar</div>
+      <table class="v-table">
+        <tr><th>State</th><th>Preview</th><th>Row background</th><th>Box</th></tr>
+        <tr><td class="v-name">Unselected</td><td class="v-preview"><div class="fbar-opt" style="width:150px"><span class="fbar-opt-check"></span><span class="fbar-opt-label">Roguelike</span></div></td>
+          <td class="hexdash">transparent</td><td class="v-note">border <span class="hexcopy" onclick="copyHex(this,'#2a5580')">#2a5580</span> (literal, not a token)</td></tr>
+        <tr><td class="v-name">Hover</td><td class="v-preview"><div class="fbar-opt" style="width:150px;background:#02b3fc0f"><span class="fbar-opt-check"></span><span class="fbar-opt-label">Roguelike</span></div></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc0f')">#02b3fc0f</span></td><td class="v-note">unchanged</td></tr>
+        <tr><td class="v-name">Selected</td><td class="v-preview"><div class="fbar-opt selected" style="width:150px;background:#02b3fc18;color:#e8f4ff"><span class="fbar-opt-check" style="background:#02b3fc;border-color:#02b3fc;color:#031329">✓</span><span class="fbar-opt-label">Roguelike</span></div></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc18')">#02b3fc18</span></td><td class="v-note">bg/border <span class="varname">var(--blue)</span>, check mark <span class="hexdash">#031329</span></td></tr>
+      </table>
+    </div>
+
+    <div class="subcat">
+      <div class="subcat-title">Half-star Rating</div>
+      <div class="subcat-why"><b>Class:</b> <span class="el-hdr-class">.stars / .star-pos / .star-half</span> · <b>Where:</b> side panel review section</div>
+      <table class="v-table">
+        <tr><th>State</th><th>Preview</th><th>Color</th></tr>
+        <tr><td class="v-name">Unfilled</td><td class="v-preview"><span class="star-half" style="position:static;color:#353e46;font-size:1.1rem">★</span></td><td class="varname">var(--s3)</td></tr>
+        <tr><td class="v-name">Filled (<code>.on</code>)</td><td class="v-preview"><span class="star-half on" style="position:static;font-size:1.1rem">★</span></td><td class="varname">var(--amber)</td></tr>
+        <tr><td class="v-name">Score readout</td><td class="v-preview"><span class="review-score">8<span class="review-score-denom">/10</span></span></td><td class="varname">var(--amber)</td></tr>
+        <tr><td class="v-name">Zero-score toggle</td><td class="v-preview"><span class="stars-zero active">0</span></td><td class="v-note">inactive <span class="varname">var(--t3)</span> → hover <span class="varname">var(--pink)</span> → active <span class="varname">var(--amber)</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ HEADER ══════════════════════ -->
+  <div class="type-sec" id="header">
+    <div class="type-hdr"><h2>Header</h2></div>
+    <p class="type-desc">Fixed top bar (<code>#hdr</code>, height <span class="varname">var(--hh)</span>): logo, search, and header buttons. Contains only Button/Badge/Pill/Chip families already documented — this section is the layout wrapper and the two elements unique to it.</p>
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Header bar</span><span class="el-hdr-class">#hdr</span></div>
+      <div class="el-hdr-usage">bg <span class="varname">var(--s1)</span>, bottom border <span class="varname">var(--bd)</span>, height <span class="varname">var(--hh)</span> (60px)</div>
+    </div>
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Today's Releases Ticker</span><span class="el-hdr-class">#todayTicker</span></div>
+      <div class="el-hdr-usage">Appears only when a game in your list releases today — a horizontal marquee under the header (<code>.active</code> flips <code>display:none → flex</code>).</div>
+      <table class="v-table">
+        <tr><th>Part</th><th>Preview</th><th>Color</th><th>Var</th></tr>
+        <tr><td class="v-name">Top/bottom border</td><td></td><td><span class="hexcopy" onclick="copyHex(this,'#ff00aa')">#ff00aa</span></td><td class="varname">var(--pink)</td></tr>
+        <tr><td class="v-name">Label chip ("OUT TODAY")</td><td class="v-preview"><span class="ticker-label" style="position:static">Out Today</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#ff00aa')">#ff00aa</span> bg / <span class="hexcopy" onclick="copyHex(this,'#ffffff')">#ffffff</span> text</td><td class="varname">var(--pink)</td></tr>
+        <tr><td class="v-name">Item</td><td class="v-preview"><span class="ticker-item">▸ Hades II</span></td>
+          <td class="v-note">text <span class="varname">var(--t2)</span> → hover <span class="varname">var(--pink)</span>; <code>▸</code> prefix always <span class="varname">var(--pink)</span></td><td></td></tr>
+      </table>
+      <div class="quirk">The scrolling track (<span class="el-hdr-class">.ticker-inner.marquee</span>) pauses on hover so items stay readable/clickable — <code>animation-play-state:paused</code>.</div>
+    </div>
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Keyboard Shortcuts Popover</span><span class="el-hdr-class">.kb-help-btn → .kb-pop</span></div>
+      <div class="el-hdr-usage">Opens from the <code>?</code> header button (an <span class="el-hdr-class">.hb.accent</span>), anchored bottom-right of the button.</div>
+      <table class="v-table">
+        <tr><th>Part</th><th>Preview</th><th>Color</th><th>Var</th></tr>
+        <tr><td class="v-name">Popover surface</td><td class="v-preview"><div class="on-base" style="padding:0"><div style="background:#0d1e33;border:1px solid #02b3fc44;border-radius:16px;padding:.4rem .5rem;width:140px"><div class="kb-pop-title" style="border-bottom:1px solid #14528f44;margin-bottom:.3rem">Shortcuts</div><div class="kb-row"><span>Add game</span><span class="kb-key">A</span></div></div></div></td>
+          <td colspan="2" class="v-note">bg <span class="varname">var(--s1)</span>, border <span class="varname">var(--bd2)</span></td></tr>
+        <tr><td class="v-name">Key chip</td><td class="v-preview"><span class="kb-key">A</span></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#353e46')">#353e46</span> bg</td><td class="varname">var(--s3)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ GAME / COLLECTION CARD ══════════════════════ -->
+  <div class="type-sec" id="card">
+    <div class="type-hdr"><h2>Game / Collection Card</h2></div>
+    <p class="type-desc">The core repeating unit of both Wishlist and Collection grids. Pills/Badges/Chips shown on it are documented in the dedicated reference — this section covers the card frame, cover art, and layout behavior around them.</p>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Card frame</span><span class="el-hdr-class">.gc</span></div>
+      <table class="v-table">
+        <tr><th>State</th><th>Background</th><th>Border</th><th>Effect</th></tr>
+        <tr><td class="v-name">Resting</td><td class="varname">var(--cbg)</td><td class="varname">var(--cbr)</td><td class="v-note">radius <span class="varname">var(--rl)</span></td></tr>
+        <tr><td class="v-name">Hover</td><td class="hexdash">unchanged</td><td class="varname">var(--blue)</td><td class="v-note"><code>translateY(-2px)</code> + shadow <span class="hexcopy" onclick="copyHex(this,'#02b3fc12')">#02b3fc12</span></td></tr>
+        <tr><td class="v-name"><code>.sb2</code> (superseded/2nd copy accent)</td><td class="hexdash">unchanged</td><td><span class="hexcopy" onclick="copyHex(this,'#9cff0044')">#9cff0044</span></td><td class="v-note">var(--green) tint border</td></tr>
+        <tr><td class="v-name"><code>.cancelled</code></td><td class="hexdash">unchanged</td><td><span class="hexcopy" onclick="copyHex(this,'#cc220033')">#cc220033</span></td><td class="v-note">every badge/price/button on the card is <code>grayscale(1) opacity:.5</code> <b>except</b> the Cancelled badge itself, which stays full color/opacity</td></tr>
+        <tr><td class="v-name">Mobile swipe hints</td><td class="v-note" colspan="3">Full-card overlay flash on swipe: right = green gradient (<span class="varname">var(--green)</span> icon), left = pink gradient (<span class="varname">var(--pink)</span> icon); desktop-only hidden above 640px</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Cover art</span><span class="el-hdr-class">.cc / .cg / .cph</span></div>
+      <table class="v-table">
+        <tr><th>Part</th><th>Notes</th></tr>
+        <tr><td class="v-name">Cover container <code>.cc</code></td><td class="v-note">16:9, bg <span class="varname">var(--s3)</span> placeholder fill</td></tr>
+        <tr><td class="v-name">Gradient overlay <code>.cg</code></td><td class="v-note">bottom-to-transparent scrim, <span class="hexcopy" onclick="copyHex(this,'#031329cc')">#031329cc</span> → transparent at 60% — keeps top badges legible over bright art</td></tr>
+        <tr><td class="v-name">No-cover placeholder <code>.cph</code></td><td class="v-note">diagonal gradient <span class="varname">var(--s1)</span> → <span class="varname">var(--base)</span></td></tr>
+        <tr><td class="v-name">Priority accent bar <code>.title-prio</code></td><td class="v-note">3px vertical bar left of the title; transparent when no priority, else <span class="varname">var(--blue)</span>/<span class="varname">var(--pink)</span>/<span class="varname">var(--lime)</span> for High/Medium/Low — same 3 priority colors used everywhere else, applied as a bar instead of a fill</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">List view</span><span class="el-hdr-class">.gg.lv</span></div>
+      <div class="el-hdr-usage">Row layout instead of grid: card becomes horizontal (thumb left, info right), hides the pill bar/gradient/hotness badge/platform icons, and mobile further stacks it into two rows so the title always gets full width.</div>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Collection list row</span><span class="el-hdr-class">.col-row</span></div>
+      <div class="el-hdr-usage">Collection mode's alternate list layout — thumbnail, title, up to 3 tags.</div>
+      <table class="v-table">
+        <tr><th>State</th><th>Background</th><th>Border</th></tr>
+        <tr><td class="v-name">Resting</td><td class="varname">var(--s1)</td><td class="varname">var(--bd)</td></tr>
+        <tr><td class="v-name">Hover</td><td><span class="hexcopy" onclick="copyHex(this,'#02b3fc0d')">#02b3fc0d</span></td><td class="varname">var(--bd2)</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Empty state</span><span class="el-hdr-class">.empty / .ei</span></div>
+      <div class="el-hdr-usage">Centered icon + text shown when a grid/list has nothing to show, color <span class="varname">var(--t3)</span>.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ FILTER SIDEBAR ══════════════════════ -->
+  <div class="type-sec" id="sidebar">
+    <div class="type-hdr"><h2>Filter Sidebar</h2></div>
+    <p class="type-desc">Slide-in panel (<code>#fbar</code>, left on desktop, bottom sheet on mobile) holding sort controls and collapsible filter sections. Filter/Selector Pills and Filter Chips inside it are documented in the Pill/Chip reference.</p>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Panel frame</span><span class="el-hdr-class">#fbar</span></div>
+      <table class="v-table">
+        <tr><th>Part</th><th>Notes</th></tr>
+        <tr><td class="v-name">Surface</td><td class="v-note">bg <span class="varname">var(--s1)</span>, right border <span class="varname">var(--bd2)</span>, 280px wide (desktop), slides in via <code>translateX</code>; mobile: full-width bottom sheet, 85vh max, slides via <code>translateY</code>, top radius <span class="varname">var(--rl)</span></td></tr>
+        <tr><td class="v-name">Backdrop</td><td class="v-note"><code>#fbar-ov</code> — <span class="hexcopy" onclick="copyHex(this,'rgba(3,19,41,.6)')">rgba(3,19,41,.6)</span> + blur</td></tr>
+        <tr><td class="v-name">Header</td><td class="v-note">title uppercase Rajdhani <span class="varname">var(--text)</span>, bottom border <span class="varname">var(--bd)</span>, 48px min-height</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Collapsible Section</span><span class="el-hdr-class">.fbar-section / .fbar-sec-hdr</span></div>
+      <table class="v-table">
+        <tr><th>Part</th><th>Preview</th><th>Color</th><th>Var</th></tr>
+        <tr><td class="v-name">Header, resting</td><td class="v-preview"><button class="fbar-sec-hdr" style="width:auto"><span class="fbar-sec-title">Genre</span><span class="fbar-sec-badge">12</span><span class="fbar-sec-arrow">▾</span></button></td>
+          <td colspan="2" class="v-note">title <span class="varname">var(--t2)</span>, count badge bg <span class="varname">var(--blue)</span>/text <span class="hexdash">#031329</span></td></tr>
+        <tr><td class="v-name">Header, hover</td><td class="v-preview"><button class="fbar-sec-hdr" style="width:auto;background:#02b3fc0a"><span class="fbar-sec-title">Genre</span><span class="fbar-sec-badge">12</span><span class="fbar-sec-arrow">▾</span></button></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc0a')">#02b3fc0a</span></td><td class="varname">—</td></tr>
+        <tr><td class="v-name">Header, open <code>.open</code></td><td class="v-preview"><span class="fbar-sec-arrow" style="display:inline-block;transform:rotate(180deg);color:#4a6280">▾</span></td>
+          <td colspan="2" class="v-note">arrow rotates 180°</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Section toolbar</span><span class="el-hdr-class">.fbar-sec-toolbar</span></div>
+      <div class="el-hdr-usage">Row above a section's option list: <span class="el-hdr-class">.fbar-search</span> + <span class="el-hdr-class">.fbar-logic-tog</span> (AND/OR) + <span class="el-hdr-class">.fbar-sec-clear</span> — all documented above under Form Controls / Buttons.</div>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Sort row</span><span class="el-hdr-class">.fbar-sort-row / .ts</span></div>
+      <div class="el-hdr-usage">Two native <code>&lt;select&gt;</code> elements (sort field + direction) styled via <span class="el-hdr-class">.ts</span> — same resting/focus border pattern as <span class="el-hdr-class">.fr select</span>, with a custom SVG chevron.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ MODAL ══════════════════════ -->
+  <div class="type-sec" id="modal">
+    <div class="type-hdr"><h2>Modals</h2></div>
+    <p class="type-desc">Centered dialog (<code>.modal</code>) used for Add/Edit, Add-to-Collection, and every confirm dialog (Remove, Reinstate, Move to Wishlist, Pre-order confirm, price/date re-check logs). Field-level controls are documented under Form Controls; Priority/Type/Fetch/TBA toggle pills are documented in the Pill reference.</p>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Modal frame</span><span class="el-hdr-class">.modal</span></div>
+      <table class="v-table">
+        <tr><th>Part</th><th>Notes</th></tr>
+        <tr><td class="v-name">Surface</td><td class="v-note">bg <span class="varname">var(--s1)</span>, border <span class="varname">var(--bd2)</span>, radius <span class="varname">var(--rl)</span>, max-width 720px (varies per dialog, e.g. 380–480px for confirms)</td></tr>
+        <tr><td class="v-name">Backdrop</td><td class="v-note"><code>#mov</code> / per-dialog overlay IDs — <span class="hexcopy" onclick="copyHex(this,'rgba(3,19,41,.8)')">rgba(3,19,41,.8)</span> + blur</td></tr>
+        <tr><td class="v-name">Title <code>.mt</code></td><td class="v-note">Rajdhani 700, 1.15rem, <span class="varname">var(--text)</span> by default — confirm dialogs recolor it to match their intent: <span class="varname">var(--pink)</span> (Remove), <span class="varname">var(--green)</span> (Reinstate), <span class="varname">var(--amber)</span> (Pre-order), <span class="varname">var(--magenta)</span> (Move to Wishlist), <span class="varname">var(--blue)</span> (price/date check logs), <span class="varname">var(--indigo)</span> (Next Up)</td></tr>
+        <tr><td class="v-name">Body <code>.modal-body</code></td><td class="v-note">scrolling region, padding 1.3rem sides, .5rem bottom (footer supplies its own padding)</td></tr>
+        <tr><td class="v-name">Footer <code>.ma</code></td><td class="v-note">sticky tap-bar of <span class="el-hdr-class">.mb2</span> buttons, documented under Buttons above</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Field grid layouts</span><span class="el-hdr-class">.fg2 / .fg3-mid-stretch / .fg4</span></div>
+      <div class="el-hdr-usage">Add/Edit modal row layouts: <code>.fg2</code> = 2 equal columns, <code>.fg4</code> = Release date (2fr) + Price/Hotness/Live-prices (.85fr each), <code>.fg3-mid-stretch</code> = flexible Type + [Parent App ID] + Priority row where the middle item collapses when hidden (DLC-only field). All collapse to single/stacked columns under 560px.</div>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Cover preview</span><span class="el-hdr-class">.cprev-wrap / .cprev-placeholder</span></div>
+      <div class="el-hdr-usage">85px-tall preview strip under the cover-image URL field; dashed <span class="varname">var(--t3)</span> border placeholder when empty, hint text in <span class="varname">var(--amber)</span> when the URL fails to load.</div>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Log dialogs</span><span class="el-hdr-class">#rdcLog / #plcLog</span></div>
+      <div class="el-hdr-usage">Monospace scrolling log inside the Release-Date-Check and Fill-Missing-Prices modals, bg <span class="varname">var(--base)</span>, border <span class="varname">var(--bd)</span>.</div>
+      <table class="v-table">
+        <tr><th>Line type</th><th>Preview</th><th>Color</th><th>Var</th></tr>
+        <tr><td class="v-name">OK</td><td class="v-preview" style="font-family:monospace"><span style="color:#9cff00">✓ Hades II — up to date</span></td><td><span class="hexcopy" onclick="copyHex(this,'#9cff00')">#9cff00</span></td><td class="varname">var(--green)</td></tr>
+        <tr><td class="v-name">Skip</td><td class="v-preview" style="font-family:monospace"><span style="color:#4a6280">– Skipped (no store link)</span></td><td><span class="hexcopy" onclick="copyHex(this,'#4a6280')">#4a6280</span></td><td class="varname">var(--t3)</td></tr>
+        <tr><td class="v-name">Error</td><td class="v-preview" style="font-family:monospace"><span style="color:#ff00aa">✕ Failed to fetch</span></td><td><span class="hexcopy" onclick="copyHex(this,'#ff00aa')">#ff00aa</span></td><td class="varname">var(--pink)</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Live Prices result cards</span><span class="el-hdr-class">.ggr-grid / .ggr-card</span></div>
+      <div class="el-hdr-usage">The Check-Live-Prices modal (<code>#ggFetchOv</code>) replaced its monospace log with a dashboard-style grid of result cards — same visual language as the Spend Stats KPI/card tiles (<span class="el-hdr-class">.ss-kpi / .ss-card</span>: <span class="varname">var(--base)</span> surface, <span class="varname">var(--bd)</span> border, <span class="varname">var(--r)</span> radius) rather than the terminal-style log used by the older Release-Date-Check / Fill-Missing-Prices dialogs. Each card shows current retail/keyshop price, a delta badge vs. the price before this run, and either a <code>low €X</code> caption or a "★ new low" badge. Status reads as a 3px left-border accent, same 3-color direction coding used for both the border and the delta badge: green = price dropped, magenta = price rose, cyan = unchanged (pink is reserved for "no data", a fetch failure rather than a price direction) — same "colored stripe = status" idiom as <span class="el-hdr-class">.panel-base-game</span>. The delta/low badges (<code>.ggr-badge</code>) compose with the base <span class="el-hdr-class">.bdg</span> class, so they're pixel-identical in shape to every other badge in the app — only color/text vary.</div>
+      <div class="el-hdr-usage"><b>Cross-device "last results":</b> opening the modal doesn't immediately start a fetch — it first loads the most recent run's results from the sheet (<code>getLatestFetchDiffs</code>, reconstructed from the PriceHistory log) and shows a "Last checked Xh ago" header, so results are visible from any device, not just the one that ran the check. A "Refresh Now" button starts a live run, which reuses the exact same card component as it streams results in. It's disabled ("Loading…") until <em>two</em> independent loads both settle: <code>_ggIdleLoading</code> (this view's own <code>getLatestFetchDiffs</code> call, mostly so a run doesn't start and immediately overwrite the grid mid-populate) and <code>_savedPricesReady</code> (<code>ggPriceCache</code>, populated by <code>loadSavedPrices</code> at boot) — the second one is the actual correctness dependency, since a live run diffs each game against <code>ggPriceCache</code>, not against this view's data; starting a run before it's loaded would show every game as "new" instead of its real delta/low.</div>
+      <div class="el-hdr-usage"><b>Clickable:</b> every card (including "No data" ones) opens that game's side panel on click/Enter — <code>data-appid</code> on <span class="el-hdr-class">.ggr-card</span>, one delegated listener on <span class="el-hdr-class">.ggr-grid</span> so it survives the grid's <code>innerHTML</code> being replaced every batch/range-switch without re-binding per card. Always *hides* the modal rather than closing it, whether or not a run is active — closing would replace its history entry, so Back from the panel landed on the bare main view instead of returning here. Hiding leaves the entry and the rendered grid intact; the panel-close branch of the app's main <code>popstate</code> handler re-shows the modal when Back lands back on that entry. Hover/focus swaps the card's background to <span class="varname">var(--s1)</span> — the left-border status accent is intentionally left untouched by the hover state, not overridden.</div>
+      <div class="el-hdr-usage"><b>Filter row</b> <span class="el-hdr-class">.ggr-filter-row</span>: All / Down / Up over the cards below — these are real <b>Filter Pills</b> (<span class="el-hdr-class">.fbar-pill</span>, the same component as the sidebar's Priority/Platform/Play status/Hotness filters, documented in the Pill/Badge/Chip reference), not a Selector Pill like <span class="el-hdr-class">.plat-tab</span>/<span class="el-hdr-class">.ph-range-pill</span> — a filter pill's own color is fixed and always visible (blue/green/magenta here) rather than only coloring in when selected, opacity alone carries selected state (.55 → .8 hover → 1 selected, identical to every other Filter Pill), and each always shows a live count via <span class="el-hdr-class">.fbar-pill-count</span>. Down/Up don't recompute anything — they just hide cards whose existing <code>.ok</code>/<code>.up</code> status class doesn't match, via <code>.ggr-grid[data-filter="…"] .ggr-card:not(.…){display:none}</code>, so a live run's newly-appended cards are filtered (and counted) automatically with no extra JS per batch. "Unchanged" and "No data" cards only count/show under All. Resets to All (and the row hides entirely) each time the modal loads a fresh view — opening the idle "last results" load, or starting a new run via Refresh Now — but stays as-is while a run's batches stream in, so picking Up mid-run keeps showing (and counting) only Up as more results arrive. A small <span class="el-hdr-class">.ggr-empty</span> message appears if the current filter matches zero cards.</div>
+      <table class="v-table">
+        <tr><th>State</th><th>Preview</th><th>Border/Badge</th><th>Var</th></tr>
+        <tr><td class="v-name">Price dropped</td><td class="v-preview"><div class="ggr-card ok" style="display:inline-block;text-align:left;min-width:170px"><div class="ggr-title">Hades II</div><div class="ggr-price"><span class="ggr-price-lbl">Retail</span><span class="ggr-price-val">€14.99</span><span class="bdg ggr-badge down">↓€2.00</span></div><div class="ggr-price"><span class="ggr-price-lbl">Key</span><span class="ggr-price-val">€10.49</span><span class="bdg ggr-badge newlow">★ new low</span></div></div></td><td><span class="hexcopy" onclick="copyHex(this,'#9cff00')">#9cff00</span></td><td class="varname">var(--green)</td></tr>
+        <tr><td class="v-name">Price rose</td><td class="v-preview"><div class="ggr-card up" style="display:inline-block;text-align:left;min-width:170px"><div class="ggr-title">Hollow Knight</div><div class="ggr-price"><span class="ggr-price-lbl">Retail</span><span class="ggr-price-val">€18.99</span><span class="bdg ggr-badge up">↑€1.00</span></div><div class="ggr-price"><span class="ggr-price-lbl">Key</span><span class="ggr-price-val ggr-na">—</span></div></div></td><td><span class="hexcopy" onclick="copyHex(this,'#ff00aa')">#ff00aa</span></td><td class="varname">var(--magenta)</td></tr>
+        <tr><td class="v-name">Unchanged</td><td class="v-preview"><div class="ggr-card skip" style="display:inline-block;text-align:left;min-width:170px"><div class="ggr-title">Balatro</div><div class="ggr-price"><span class="ggr-price-lbl">Retail</span><span class="ggr-price-val">€13.99</span><span class="bdg ggr-badge flat">=</span></div><div class="ggr-price"><span class="ggr-price-lbl">Key</span><span class="ggr-price-val">€12.50</span><span class="bdg ggr-badge flat">=</span></div></div></td><td><span class="hexcopy" onclick="copyHex(this,'#02b3fc')">#02b3fc</span></td><td class="varname">var(--cyan)</td></tr>
+        <tr><td class="v-name">No data</td><td class="v-preview"><div class="ggr-card err" style="display:inline-block;text-align:left;min-width:170px"><div class="ggr-title">Silksong</div><div class="ggr-errline">No price data</div></div></td><td><span class="hexcopy" onclick="copyHex(this,'#ff00aa')">#ff00aa</span></td><td class="varname">var(--pink)</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Next Up picker</span><span class="el-hdr-class">#nuov / .nu-stage</span></div>
+      <div class="el-hdr-usage">Menu item (Hamburger menu → "Next up", both mobile <code>#hmenu</code> and desktop <code>#dhmenu</code>) that picks one random game from whatever the Collection filter bar currently shows — <code>collectionFiltered()</code>, minus DLC already nested under a parent. Deliberately has no picker-owned weighting (by priority, hotness, staleness, etc.): narrowing the candidate pool is the filter bar's job (Play status / Genre / Platform / Steam collection), not a second filtering system layered on top.</div>
+      <div class="el-hdr-usage"><b>Reveal animation</b> <span class="el-hdr-class">.nu-shuffle-face</span>: a slot-machine-style cycle through random candidates' cover art (reusing the real <span class="el-hdr-class">.cc</span>/<span class="el-hdr-class">.cph</span> cover markup, so a missing cover falls back to the same placeholder as everywhere else) plus title (<span class="el-hdr-class">.ct</span>, identical to the card title style). Each tick is a fresh DOM node so the <code>nuTick</code> keyframe (scale .96→1, opacity .55→1) restarts automatically — no manual reflow trick needed. Ticks decelerate via a quadratic ease (<code>50 + 260*(i/n)²</code> ms), landing after ~12–16 ticks on open or ~7–10 on Reroll.</div>
+      <div class="el-hdr-usage"><b>Landed card</b> <span class="el-hdr-class">.nu-result</span>: the actual pick renders via <code>colCardHTML()</code> — the same function the Collection grid uses — inside a single-item <span class="el-hdr-class">.gg</span> wrapper, so it is pixel-identical to its grid counterpart (play-status badge, platform badges, quick actions, everything) rather than a bespoke summary card. A short <code>nuLand</code> pop-in (scale .88→1) plays once on arrival. Clicking the card (outside its quick-action icons, which already stop propagation) closes the picker and opens that game's side panel, same as clicking it in the grid. Reroll re-runs a shorter shuffle and avoids repeating the immediately-previous pick when the pool has more than one game; it hides itself when the pool is exactly one game, since there's nothing else to land on.</div>
+      <div class="el-hdr-usage"><b>Empty state</b> <span class="el-hdr-class">.nu-empty</span>: plain centered text (no icon) when the current Collection filters match zero eligible games, telling the user to adjust the filter bar rather than the picker offering its own fallback logic.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ SIDE PANEL ══════════════════════ -->
+  <div class="type-sec" id="panel">
+    <div class="type-hdr"><h2>Side Panel</h2></div>
+    <p class="type-desc">Right-side drawer (<code>#panel</code>, width <span class="varname">var(--pw)</span>) showing full game/collection detail. Badges/Pills inside it (play-status quick-picker, DLC-count badge, tag badges) are documented in the Pill/Badge reference.</p>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Panel frame</span><span class="el-hdr-class">#panel</span></div>
+      <table class="v-table">
+        <tr><th>Part</th><th>Notes</th></tr>
+        <tr><td class="v-name">Surface</td><td class="v-note">bg <span class="varname">var(--s1)</span>, left border <span class="varname">var(--bd2)</span>, slides via <code>translateX</code></td></tr>
+        <tr><td class="v-name">Drag handle</td><td class="v-note"><code>#panel-drag-handle</code> — 6px resize strip, transparent at rest → <span class="hexcopy" onclick="copyHex(this,'#02b3fc33')">#02b3fc33</span> on hover/drag (desktop resizable panel width)</td></tr>
+        <tr><td class="v-name">Cover</td><td class="v-note"><code>.pcov</code>, 195px tall, bottom gradient <code>.pcg</code> fading to <span class="varname">var(--s1)</span>, parallax on scroll via JS transform</td></tr>
+        <tr><td class="v-name">Section label <code>.psl</code></td><td class="v-note">uppercase, <span class="varname">var(--t3)</span>, trailing hairline rule (same idiom as main grid's <span class="el-hdr-class">.sl</span>)</td></tr>
+        <tr><td class="v-name">Key/value row <code>.pv-kv</code></td><td class="v-note">label <span class="varname">var(--t3)</span>, value <span class="varname">var(--t2)</span> via <code>.pv</code></td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Base game / DLC link</span><span class="el-hdr-class">.panel-base-game</span></div>
+      <div class="el-hdr-usage">Row linking to a related game/DLC; left border tints by priority (<span class="varname">var(--blue)</span>/<span class="varname">var(--pink)</span>/<span class="varname">var(--lime)</span>, same as the card's <code>.title-prio</code>).</div>
+      <table class="v-table">
+        <tr><th>State</th><th>Background</th><th>Arrow</th></tr>
+        <tr><td class="v-name">Resting</td><td class="hexdash">transparent</td><td class="varname">var(--t3)</td></tr>
+        <tr><td class="v-name">Hover</td><td><span class="hexcopy" onclick="copyHex(this,'#02b3fc15')">#02b3fc15</span></td><td class="v-note"><span class="varname">var(--blue)</span>, nudges right 2px</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Per-platform purchases box</span><span class="el-hdr-class">.coll-box</span></div>
+      <div class="el-hdr-usage">Collection-mode panel section — platform tabs (<span class="el-hdr-class">.plat-tab</span>, a Selector Pill, see Pill reference) switch between purchase records; each record shows a 3-cell stat row (<span class="el-hdr-class">.purch-3col/.purch-cell</span>: label <span class="varname">var(--t3)</span> uppercase / value <span class="varname">var(--t2)</span>) and a play-status row.</div>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Notes system</span><span class="el-hdr-class">.note-entry / .note-compose</span></div>
+      <table class="v-table">
+        <tr><th>Part</th><th>Notes</th></tr>
+        <tr><td class="v-name">Entry</td><td class="v-note">bg <span class="varname">var(--base)</span>, border <span class="varname">var(--bd)</span>; date pill <span class="hexdash">99px</span> radius, <span class="varname">var(--t3)</span></td></tr>
+        <tr><td class="v-name">Edit textarea</td><td class="v-note">bg <span class="varname">var(--s1)</span>, border <span class="varname">var(--blue)</span> (always shown active while editing)</td></tr>
+        <tr><td class="v-name">Compose date field</td><td class="v-note">pill-shaped (99px), <span class="varname">var(--t3)</span> → focus <span class="varname">var(--blue)</span> border + <span class="varname">var(--text)</span></td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Price History chart</span><span class="el-hdr-class">.ph-chart</span></div>
+      <div class="el-hdr-usage">Lives inside the same <span class="el-hdr-class">.ps</span> section as the Live Price row (<span class="el-hdr-class">.pv-liveprice</span>, the <span class="el-hdr-class">.ggp-*</span> badges), directly below it, for any tracked game (wishlist, or bought-but-still-on-Steam-wishlist, with a Steam app id) — not a separate section, since the chart's newest point is the same number the badges already show; splitting them into two sections read as duplicated info. Fetched <em>once</em> on panel open from the PriceHistory sheet (every live-price check is logged there); switching the range filter re-slices that same fetched set client-side rather than re-hitting the network. Hand-rolled inline SVG, same idiom as the Spend Stats trend chart (<span class="el-hdr-class">.ss-line-*</span>): retail (<span class="varname">var(--cyan)</span>) and keyshop (<span class="varname">var(--amber)</span>) lines with dot markers, a dashed reference line at each series' personal-low, hover/focus tooltip + crosshair via invisible hit rects. Needs at least 2 recorded price checks (in the selected range) to draw a line; shows an empty-state message otherwise, with the range row still visible so you can back out to a wider range.</div>
+      <div class="el-hdr-usage"><b>Tooltip clamping:</b> the tooltip is center-anchored on its data point by default (<code>transform:translate(-50%,-125%)</code>) but its <code>left</code> is clamped to <code>[halfWidth, containerWidth − halfWidth]</code> before being set, so it never renders partway outside <span class="el-hdr-class">.ph-chart</span>'s own box — the first/last points used to push half the tooltip past the panel edge, where it got clipped by the panel's scroll container instead of just repositioning. The tooltip also shows the fetch time (<code>D Mon, HH:mm</code>, e.g. "10 Jul, 09:18"), not just the date, since multiple checks on the same day are otherwise indistinguishable. Axis labels use <code>text-anchor: start/end</code> (not always <code>middle</code>) at the first/last tick for the same reason — they grow inward from the edge instead of centering on it and clipping.</div>
+      <div class="el-hdr-usage"><b>Range filter</b> <span class="el-hdr-class">.ph-range-row / .ph-range-pill</span>: 7D / 1M / 3M / 6M / 1Y / All, defaulting to All. Same selector-pill shape/grammar as <span class="el-hdr-class">.plat-tab</span> (20px radius, 1.5px border, transparent at rest, solid <span class="varname">var(--blue)</span> fill + dark text when <code>.on</code>) — picking a history window is the same kind of one-of-many choice as picking a platform tab. Wraps to a second line on narrow panels instead of overflowing.</div>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Panel footer</span><span class="el-hdr-class">.panel-footer</span></div>
+      <div class="el-hdr-usage">Same sticky tap-bar treatment as the modal footer, built from <span class="el-hdr-class">.pa</span> buttons (documented under Buttons). Collapses to nothing (<code>display:none</code>) when empty.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ CALENDAR ══════════════════════ -->
+  <div class="type-sec" id="calendar">
+    <div class="type-hdr"><h2>Calendar</h2></div>
+    <p class="type-desc">Full-screen overlay (<code>#calOv</code>) showing release dates across two months, with a TBA sidebar. Priority accents reuse the same 3 colors as everywhere else (<span class="varname">var(--blue)</span>/<span class="varname">var(--pink)</span>/<span class="varname">var(--lime)</span>).</p>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Header</span><span class="el-hdr-class">.cal-hdr-inner</span></div>
+      <div class="el-hdr-usage">Title (<span class="el-hdr-class">.cal-hdr-title</span>, <span class="varname">var(--text)</span>), month/year native selects styled as plain Rajdhani text in <span class="varname">var(--blue)</span> (<span class="el-hdr-class">.cal-month-sel/.cal-year-sel</span>), nav arrows as <span class="el-hdr-class">.hb.cal-arrow.accent</span>.</div>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Day cell</span><span class="el-hdr-class">.cal-cell</span></div>
+      <table class="v-table">
+        <tr><th>State</th><th>Preview</th><th>Background</th><th>Border</th></tr>
+        <tr><td class="v-name">Resting</td><td class="v-preview"><div class="cal-cell" style="position:static;display:inline-block"><div class="cal-dn">14</div></div></td>
+          <td class="varname">var(--base)</td><td class="varname">var(--bd)</td></tr>
+        <tr><td class="v-name"><code>.today</code></td><td class="v-preview"><div class="cal-cell today" style="position:static;display:inline-block"><div class="cal-dn">14</div></div></td>
+          <td><span class="hexcopy" onclick="copyHex(this,'#02b3fc08')">#02b3fc08</span></td><td class="varname">var(--blue)</td></tr>
+        <tr><td class="v-name"><code>.past</code></td><td class="v-note" colspan="2">day number opacity <span class="varname">.4</span></td></tr>
+        <tr><td class="v-name"><code>.other-month</code></td><td class="v-note" colspan="2">whole cell opacity <span class="varname">.2</span>, non-interactive</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Release-count bubble</span><span class="el-hdr-class">.cal-count</span></div>
+      <div class="el-hdr-usage">Circular count badge inside a day cell; opens the day's <span class="el-hdr-class">.cal-pop</span> popover on click.</div>
+      <table class="v-table">
+        <tr><th>Variant</th><th>Preview</th><th>Background</th><th>Var</th></tr>
+        <tr><td class="v-name">Normal</td><td class="v-preview"><span class="cal-count" style="position:static">3</span></td><td><span class="hexcopy" onclick="copyHex(this,'#02b3fc')">#02b3fc</span></td><td class="varname">var(--blue)</td></tr>
+        <tr><td class="v-name"><code>.has-pre</code> (includes a pre-order)</td><td class="v-preview"><span class="cal-count has-pre" style="position:static">3</span></td><td><span class="hexcopy" onclick="copyHex(this,'#f7cd26')">#f7cd26</span></td><td class="varname">var(--amber)</td></tr>
+        <tr><td class="v-name">Hover</td><td class="v-note" colspan="3"><code>scale(1.15)</code> + glow ring <span class="hexcopy" onclick="copyHex(this,'#02b3fc33')">#02b3fc33</span></td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Day popover</span><span class="el-hdr-class">.cal-pop / .cal-pop-item</span></div>
+      <div class="el-hdr-usage">Fixed-position floating list of that day's releases; each row's left border tints by priority (<span class="varname">var(--blue)</span>/<span class="varname">var(--pink)</span>/<span class="varname">var(--lime)</span>), hover bg <span class="hexcopy" onclick="copyHex(this,'#02b3fc15')">#02b3fc15</span>; title colored by status (<span class="el-hdr-class">.st-owned</span> <span class="varname">var(--green)</span>, <span class="el-hdr-class">.st-preorder</span> <span class="varname">var(--amber)</span>, <span class="el-hdr-class">.st-cancelled</span> <span class="hexcopy" onclick="copyHex(this,'#cc2200')">#cc2200</span>, <span class="el-hdr-class">.st-removed</span> <span class="varname">var(--t3)</span>).</div>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">TBA list chip</span><span class="el-hdr-class">.cal-tba-chip</span></div>
+      <div class="el-hdr-usage">Rows in the TBA sidebar list, same priority-border/hover pattern as <span class="el-hdr-class">.cal-pop-item</span>; subtitle (<span class="el-hdr-class">.cal-tba-chip-sub</span>, <span class="varname">var(--t3)</span>) brightens toward <span class="hexcopy" onclick="copyHex(this,'#02b3fc99')">#02b3fc99</span> on row hover.</div>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">TBA pagination</span><span class="el-hdr-class">.tba-page-dot / .tba-page-btn</span></div>
+      <table class="v-table">
+        <tr><th>Element</th><th>Preview</th><th>State</th><th>Color</th></tr>
+        <tr><td class="v-name">Dot, inactive</td><td class="v-preview"><span class="tba-page-dot" style="display:inline-block"></span></td><td class="v-note">resting</td><td class="varname">var(--s3)</td></tr>
+        <tr><td class="v-name">Dot, active</td><td class="v-preview"><span class="tba-page-dot active" style="display:inline-block"></span></td><td class="v-note"><code>scale(1.3)</code></td><td class="varname">var(--blue)</td></tr>
+        <tr><td class="v-name">Prev/next button</td><td class="v-preview"><button class="tba-page-btn">‹</button></td><td class="v-note">documented above under Buttons</td><td class="varname">—</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ OVERLAYS & FEEDBACK ══════════════════════ -->
+  <div class="type-sec" id="feedback">
+    <div class="type-hdr"><h2>Overlays &amp; Feedback</h2></div>
+    <p class="type-desc">Transient UI: toasts, tooltips, dropdowns. The mobile Sync Status chip is a Chip and lives in the Chip reference — not repeated here.</p>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Toast</span><span class="el-hdr-class">#toast</span></div>
+      <table class="v-table">
+        <tr><th>Variant</th><th>Preview</th><th>Border/Text</th><th>Var</th></tr>
+        <tr><td class="v-name">Default</td><td class="v-preview"><div style="position:static;display:inline-block;background:#0d1e33;border:1px solid #02b3fc44;border-radius:10px;padding:.5rem 1rem;font-size:.76rem;color:#e8f4ff">Saved</div></td><td class="varname">var(--bd2)</td><td class="varname">var(--text)</td></tr>
+        <tr><td class="v-name"><code>.warn</code></td><td class="v-preview"><div style="position:static;display:inline-block;background:#0d1e33;border:1px solid #f7cd26;border-radius:10px;padding:.5rem 1rem;font-size:.76rem;color:#f7cd26">Check the date field</div></td><td class="varname">var(--amber)</td><td class="varname">var(--amber)</td></tr>
+        <tr><td class="v-name"><code>.err</code></td><td class="v-preview"><div style="position:static;display:inline-block;background:#0d1e33;border:1px solid #ff00aa;border-radius:10px;padding:.5rem 1rem;font-size:.76rem;color:#ff00aa">Sync failed</div></td><td class="varname">var(--pink)</td><td class="varname">var(--pink)</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Tooltips</span><span class="el-hdr-class">.meta-tip-icon → #metaFloatTip · .col-ps-badge .ps-tip · [data-added-tip]</span></div>
+      <table class="v-table">
+        <tr><th>Trigger</th><th>Preview</th><th>Notes</th></tr>
+        <tr><td class="v-name">Meta info icon</td><td class="v-preview"><span class="meta-tip-icon" style="cursor:help">ⓘ</span></td><td class="v-note"><span class="varname">var(--t3)</span> at 70% opacity → <span class="varname">var(--blue)</span> full opacity on hover; opens a singleton fixed tooltip (bg <span class="varname">var(--s1)</span>, border <span class="varname">var(--bd2)</span>, text <span class="varname">var(--t2)</span>)</td></tr>
+        <tr><td class="v-name">Play-status badge tip</td><td class="v-preview"><span class="col-ps-badge" style="background:#0a2a4a;color:#4ab0f5;position:relative">IP</span></td><td class="v-note">Hidden <span class="el-hdr-class">.ps-tip</span> bubble appears above the badge on hover — same bg/border/text as other floating tooltips</td></tr>
+        <tr><td class="v-name">Card "added" tooltip</td><td class="v-preview"><div class="on-cover" style="position:relative"><span style="font-size:.6rem;color:#8aabcc">Added Mar 3</span></div></td><td class="v-note"><code>::after</code> pseudo-element reading <code>data-added-tip</code>, bg <span class="hexcopy" onclick="copyHex(this,'#031329ee')">#031329ee</span>, border <span class="varname">var(--bd2)</span></td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Dropdowns</span><span class="el-hdr-class">.genre-dd · .pick-dd + .dd-opt</span></div>
+      <table class="v-table">
+        <tr><th>Part</th><th>Preview</th><th>Color</th><th>Var</th></tr>
+        <tr><td class="v-name">Surface</td><td class="v-preview"><div class="on-base" style="padding:0;width:140px"><div style="background:#0d1e33;border:1px solid #02b3fc44;border-radius:10px;padding:.2rem 0"><div class="dd-opt">Roguelike</div><div class="dd-opt active">Metroidvania</div></div></div></td>
+          <td colspan="2" class="v-note">bg <span class="varname">var(--s1)</span>, border <span class="varname">var(--bd2)</span></td></tr>
+        <tr><td class="v-name">Option, hover</td><td></td><td><span class="hexcopy" onclick="copyHex(this,'#02b3fc15')">#02b3fc15</span> bg</td><td class="varname">text → var(--text)</td></tr>
+        <tr><td class="v-name">Option, active/selected</td><td></td><td><span class="hexcopy" onclick="copyHex(this,'#02b3fc18')">#02b3fc18</span> bg</td><td class="varname">text → var(--blue)</td></tr>
+      </table>
+    </div>
+
+    <div class="el-block">
+      <div class="el-hdr"><span class="el-hdr-name">Play-status quick picker</span><span class="el-hdr-class">.ps-picker / .ps-pick-opt</span></div>
+      <div class="el-hdr-usage">Floating list opened from a Play-status pill/badge in the panel or a collection card — options use the same 8 play-status colors as the Badge reference, current value indicated by a left-border accent (<code>.active</code>).</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function copyHex(el, val){
+  const original = el.textContent;
+  const feedback = () => {
+    el.textContent = '✓ copied';
+    el.classList.add('copied');
+    setTimeout(() => { el.textContent = original; el.classList.remove('copied'); }, 900);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(val).then(feedback).catch(() => fallbackCopy(val, feedback));
+  } else {
+    fallbackCopy(val, feedback);
+  }
+}
+function fallbackCopy(text, cb){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  cb();
+}
+</script>
+</body>
+</html>

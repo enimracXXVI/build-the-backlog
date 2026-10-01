@@ -1,0 +1,3 @@
+The `caveman`, `caveman-help`, `caveman-commit`, `caveman-review`, `caveman-compress`, and `cavecrew` skills (and the `cavecrew-*` agents in `.claude/agents/`) are vendored from https://github.com/JuliusBrussee/caveman, MIT licensed — see `THIRD_PARTY_LICENSE_caveman.txt` in this directory.
+
+Not installed: `caveman-stats`. It requires registering `SessionStart`/`UserPromptSubmit` hooks (`src/hooks/caveman-activate.js`, `caveman-mode-tracker.js`) in `.claude/settings.json`, which this install intentionally left out — ask to add it if the live token-savings stats and hook-driven auto-activation are wanted.
