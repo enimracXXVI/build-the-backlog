@@ -328,91 +328,103 @@ function getPriceHistory(appid) {
 //    device can view "what changed last time" without having been the one
 //    that ran it — batches inside one run land ~61s apart, so a 30-minute
 //    gap between rows marks the boundary of a new run. ──────────────────
+// Reconstructs "what the last Live Prices run found" for the idle view —
+// see openGgFetchModalIdle in app.js. Membership in "the last run" comes
+// from GamePrices' last_fetched (upsertGamePrices touches EVERY checked
+// game's row every run, changed or not), not from PriceHistory, which only
+// gets a new row for a game when its price actually changed (see the dedup
+// in runGGDealsFetch) — reading PriceHistory for run membership silently
+// dropped every unchanged game from this view (reopening the modal after a
+// 123-game run showed only the ~62 that moved).
 function getLatestFetchDiffs() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const histSheet = ss.getSheetByName(PRICE_HISTORY_SHEET);
-  if (!histSheet) return [];
-  const lastRow = histSheet.getLastRow();
-  const lastCol = histSheet.getLastColumn();
-  if (lastRow < 2) return [];
-  const headers = histSheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
-  const c = h => headers.indexOf(h);
+  const gpSheet = ss.getSheetByName(GAME_PRICES_SHEET);
+  if (!gpSheet) return [];
+  const gpData = gpSheet.getDataRange().getValues();
+  if (gpData.length < 2) return [];
+  const gpHeaders = gpData[0].map(String);
+  const gc = h => gpHeaders.indexOf(h);
 
-  // PriceHistory is append-only — one row per game per run, forever — so
-  // getDataRange().getValues() here got slower every week as it grew, and on
-  // a slow mobile connection the request would time out or get dropped
-  // before Apps Script finished ("Couldn't load last results."). Only the
-  // most recent couple of runs can ever matter (this run, plus the one
-  // before it for the prev-price diff), so cap how far back we read instead
-  // of scanning the whole sheet regardless of its size.
-  const TAIL_ROWS = 4000;
-  const startRow = Math.max(2, lastRow - TAIL_ROWS + 1);
-  const rows = histSheet.getRange(startRow, 1, lastRow - startRow + 1, lastCol).getValues();
+  const allGames = gpData.slice(1).map(r => ({
+    appid: String(r[gc('appid')]),
+    title: r[gc('title')],
+    retail: parseFloat(r[gc('last_retail')]) || 0,
+    keyshop: parseFloat(r[gc('last_keyshop')]) || 0,
+    lowRetail: parseFloat(r[gc('personal_low_retail')]) || 0,
+    lowKeyshop: parseFloat(r[gc('personal_low_keyshop')]) || 0,
+    fetched_at: Number(r[gc('last_fetched')]) || 0,
+  })).filter(g => g.fetched_at > 0);
+  if (!allGames.length) return [];
 
-  const newLowCol = c('is_new_low'); // -1 on older sheets pre-dating this column
-  const all = rows.map(r => ({
-    appid: String(r[c('appid')]),
-    title: r[c('title')],
-    fetched_at: Number(r[c('fetched_at')]) || 0,
-    retail: parseFloat(r[c('retail')]) || 0,
-    keyshop: parseFloat(r[c('keyshop')]) || 0,
-    currency: r[c('currency')],
-    isNewLow: newLowCol !== -1 && !!Number(r[newLowCol]),
-  })).sort((a, b) => a.fetched_at - b.fetched_at);
-  if (!all.length) return [];
-
+  // Same run-boundary clustering as before, just applied to GamePrices'
+  // once-per-game timestamp instead of PriceHistory's append log.
   const RUN_GAP_MS = 30 * 60 * 1000;
-  const distinctTs = [...new Set(all.map(r => r.fetched_at))].sort((a, b) => a - b);
+  const distinctTs = [...new Set(allGames.map(g => g.fetched_at))].sort((a, b) => a - b);
   let runStartTs = distinctTs[distinctTs.length - 1];
   for (let i = distinctTs.length - 1; i > 0; i--) {
     if (distinctTs[i] - distinctTs[i - 1] <= RUN_GAP_MS) runStartTs = distinctTs[i - 1];
     else break;
   }
+  const lastRunGames = allGames.filter(g => g.fetched_at >= runStartTs);
 
-  // Group each appid's own rows (ascending) so the diff baseline is always
-  // "this game's own previous fetch" — not clipped at the run boundary,
-  // which would skip past a same-session recheck (e.g. an interrupted run
-  // resumed a few minutes later, landing inside the same 30-min window as
-  // its own earlier attempt) and wrongly diff against a much older price.
-  const byAppid = {};
-  all.forEach(r => { (byAppid[r.appid] = byAppid[r.appid] || []).push(r); });
-
-  const lowsByAppid = {};
-  const gpSheet = ss.getSheetByName(GAME_PRICES_SHEET);
-  if (gpSheet) {
-    const gpRows = gpSheet.getDataRange().getValues();
-    if (gpRows.length > 1) {
-      const gpHeaders = gpRows[0].map(String);
-      const gc = h => gpHeaders.indexOf(h);
-      gpRows.slice(1).forEach(r => {
-        lowsByAppid[String(r[gc('appid')])] = {
-          retail: parseFloat(r[gc('personal_low_retail')]) || 0,
-          keyshop: parseFloat(r[gc('personal_low_keyshop')]) || 0,
-        };
+  // Only games that actually changed this run have a fresh PriceHistory row
+  // to diff against (for the prev-price delta badge and is_new_low) — pull
+  // just enough of the tail to cover this run plus the one before it.
+  const byAppidHist = {};
+  const histSheet = ss.getSheetByName(PRICE_HISTORY_SHEET);
+  if (histSheet) {
+    const lastRow = histSheet.getLastRow();
+    const lastCol = histSheet.getLastColumn();
+    if (lastRow >= 2) {
+      const headers = histSheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
+      const c = h => headers.indexOf(h);
+      const newLowCol = c('is_new_low'); // -1 on older sheets pre-dating this column
+      const TAIL_ROWS = 4000;
+      const startRow = Math.max(2, lastRow - TAIL_ROWS + 1);
+      const rows = histSheet.getRange(startRow, 1, lastRow - startRow + 1, lastCol).getValues();
+      rows.forEach(r => {
+        const appid = String(r[c('appid')]);
+        (byAppidHist[appid] = byAppidHist[appid] || []).push({
+          fetched_at: Number(r[c('fetched_at')]) || 0,
+          retail: parseFloat(r[c('retail')]) || 0,
+          keyshop: parseFloat(r[c('keyshop')]) || 0,
+          isNewLow: newLowCol !== -1 && !!Number(r[newLowCol]),
+        });
       });
+      Object.keys(byAppidHist).forEach(k => byAppidHist[k].sort((a, b) => a.fetched_at - b.fetched_at));
     }
   }
 
-  return Object.keys(byAppid)
-    .filter(appid => byAppid[appid][byAppid[appid].length - 1].fetched_at >= runStartTs)
-    .map(appid => {
-      const arr = byAppid[appid];
-      const cur = arr[arr.length - 1];
-      const prev = arr.length > 1 ? arr[arr.length - 2] : null;
-      const low = lowsByAppid[appid] || { retail: 0, keyshop: 0 };
-      return {
-        appid: appid,
-        title: cur.title,
-        fetched_at: cur.fetched_at,
-        retail: cur.retail,
-        keyshop: cur.keyshop,
-        prevRetail: prev ? prev.retail : 0,
-        prevKeyshop: prev ? prev.keyshop : 0,
-        lowRetail: low.retail,
-        lowKeyshop: low.keyshop,
-        isNewLow: cur.isNewLow,
-      };
-    }).sort((a, b) => b.fetched_at - a.fetched_at);
+  return lastRunGames.map(g => {
+    const hist = byAppidHist[g.appid] || [];
+    const lastHistRow = hist.length ? hist[hist.length - 1] : null;
+    const changedThisRun = lastHistRow && lastHistRow.fetched_at >= runStartTs;
+    let prevRetail, prevKeyshop, isNewLow;
+    if (changedThisRun) {
+      const prev = hist.length > 1 ? hist[hist.length - 2] : null;
+      prevRetail = prev ? prev.retail : 0;
+      prevKeyshop = prev ? prev.keyshop : 0;
+      isNewLow = lastHistRow.isNewLow;
+    } else {
+      // Unchanged this run — same as current, so the card correctly renders
+      // a flat "=" instead of a manufactured delta.
+      prevRetail = g.retail;
+      prevKeyshop = g.keyshop;
+      isNewLow = false;
+    }
+    return {
+      appid: g.appid,
+      title: g.title,
+      fetched_at: g.fetched_at,
+      retail: g.retail,
+      keyshop: g.keyshop,
+      prevRetail: prevRetail,
+      prevKeyshop: prevKeyshop,
+      lowRetail: g.lowRetail,
+      lowKeyshop: g.lowKeyshop,
+      isNewLow: isNewLow,
+    };
+  }).sort((a, b) => b.fetched_at - a.fetched_at);
 }
 
 // ── Upsert GamePrices + compute personal lows ────────────────
