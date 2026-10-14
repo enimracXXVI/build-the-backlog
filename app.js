@@ -11,7 +11,7 @@ const GG_WORKER = (typeof window !== 'undefined' && window.BTB_GGDEALS_WORKER) |
 // Bump alongside sw.js's CACHE on every merge that touches app.js/index.html/
 // style.css — the pair is how a deploy can be visually confirmed live instead
 // of trusting a service worker to have actually picked up the new build.
-const APP_VERSION = '29';
+const APP_VERSION = '30';
 let ggPriceCache = {};
 // Plain fetch() has no timeout — a stalled request (dead connection, Worker
 // cold-start, upstream throttling) leaves an await stuck forever with no way
