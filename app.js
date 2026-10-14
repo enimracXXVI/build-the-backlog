@@ -4570,7 +4570,7 @@ document.addEventListener('keydown',function(e){
   // same delegated click/keydown handling as #ggFetchGrid.
   function rdcCardHTML(e){
     return`<div class="ggr-card ${e.updated?'ok':'skip'}" data-appid="${esc(String(e.appid))}" tabindex="0">
-      <div class="ggr-title">${esc(e.title)}</div>
+      ${_modalCardTitleRow(e.appid,e.title)}
       <div class="ggr-price">
         <span class="ggr-price-lbl">Date</span>
         <span class="ggr-price-val">${esc(e.newRd||'(empty)')}</span>
@@ -4581,7 +4581,7 @@ document.addEventListener('keydown',function(e){
   }
   function rdcErrCardHTML(title,appid){
     return`<div class="ggr-card err" data-appid="${esc(String(appid))}" tabindex="0">
-      <div class="ggr-title">${esc(title)}</div>
+      ${_modalCardTitleRow(appid,title)}
       <div class="ggr-errline">No Steam data</div>
     </div>`;
   }
@@ -5821,6 +5821,19 @@ function ggPriceStatHTML(label,newV,oldV,lowV,gamePrice,isNewLow){
   const discBadge=discPct!=null?`<span class="bdg ggr-badge disc">-${discPct}%</span>`:'';
   return`<div class="ggr-price"><span class="ggr-price-lbl">${label}</span><span class="ggr-price-val">${cur}</span>${discBadge}${deltaBadge}${lowBit}</div>`;
 }
+// Priority pill + hotness badge for a modal result card's title row — same
+// classes/markup as the main wishlist card (see cardHTML) so they render
+// pixel-identically, just reused here for a quick "how much do I want this"
+// glance on the Live Prices and Release Date Check cards. Looked up by
+// appid since these cards are built from fetch results, not game objects.
+function _modalCardTitleRow(appid,title){
+  const g=games.find(x=>String(x.steamAppId)===String(appid));
+  const prio=`<span class="title-prio ${prioClass(g?g.priority:'medium')}"></span>`;
+  const isNR=g?nr(g):true;
+  const h=isNR?0:Math.min(100,parseInt(g.hotness)||0);
+  const hotBdg=isNR?'':`<span class="bdg b-hot" title="Hotness: ${h}">${h}</span>`;
+  return`<div class="title-row ggr-title-row">${prio}<div class="ggr-title">${esc(title)}</div>${hotBdg}</div>`;
+}
 // One result card — shared by the live in-progress grid and the
 // reconstructed "last results" idle view, so both look identical.
 function ggPriceCardHTML(e){
@@ -5845,7 +5858,7 @@ function ggPriceCardHTML(e){
   const bestField=(!isNaN(r)&&r>0&&(isNaN(k)||k<=0||r<=k))?'r':(!isNaN(k)&&k>0?'k':null);
   return`<div class="ggr-card ${cls}" data-appid="${esc(String(e.appid))}"${discPct!=null?` data-disc="${discPct}"`:''} tabindex="0">
     <button class="qb qr ggr-exclude" title="Exclude from Live Price checks" onclick="event.stopPropagation();_ggExcludeGame('${esc(String(e.appid))}')">${IC.close}</button>
-    <div class="ggr-title">${esc(e.title)}</div>
+    ${_modalCardTitleRow(e.appid,e.title)}
     ${ggPriceStatHTML('Retail',r,oldR,lowR,e.price,!!e.isNewLow&&bestField==='r')}
     ${ggPriceStatHTML('Key',k,oldK,lowK,e.price,!!e.isNewLow&&bestField==='k')}
   </div>`;
@@ -5853,7 +5866,7 @@ function ggPriceCardHTML(e){
 function ggPriceErrCardHTML(title,appid){
   return`<div class="ggr-card err" data-appid="${esc(String(appid))}" tabindex="0">
     <button class="qb qr ggr-exclude" title="Exclude from Live Price checks" onclick="event.stopPropagation();_ggExcludeGame('${esc(String(appid))}')">${IC.close}</button>
-    <div class="ggr-title">${esc(title)}</div><div class="ggr-errline">No price data</div>
+    ${_modalCardTitleRow(appid,title)}<div class="ggr-errline">No price data</div>
   </div>`;
 }
 

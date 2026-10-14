@@ -661,6 +661,13 @@ button{text-transform:none;letter-spacing:0}
 .ggr-card.err{border-left-color:var(--pink)}
 .ggr-exclude{position:absolute;top:.4rem;right:.4rem}
 .ggr-title{font-size:.78rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.35rem;margin-right:1.6rem}
+/* Priority pill + hotness badge, reused on Live Prices/Release Date Check
+   cards (see _modalCardTitleRow) — the row carries the spacing/edge-clear
+   margins .ggr-title used alone, so a bare .ggr-title (err cards with no
+   pill/badge) keeps looking identical. */
+.ggr-title-row{display:flex;align-items:center;gap:.35rem;margin-bottom:.35rem;margin-right:1.6rem}
+.ggr-title-row .ggr-title{margin-bottom:0;margin-right:0;flex:1;min-width:0}
+.ggr-title-row .b-hot{flex-shrink:0}
 .ggr-price{display:flex;align-items:center;gap:.35rem;font-size:.74rem;line-height:1.6;flex-wrap:nowrap}
 .ggr-price-lbl{color:var(--t3);font-weight:700;font-size:.62rem;letter-spacing:.04em;text-transform:uppercase;width:34px;flex:none}
 .ggr-price-val{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums;flex:none}
