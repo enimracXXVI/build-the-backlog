@@ -6300,7 +6300,12 @@ async function runGGDealsFetch(resumeState){
             lowRetail:before?(before.lowRetail||0):0,
             lowKeyshop:before?(before.lowKeyshop||0):0,
           };
-          priceEntries.push({appid:g.steamAppId,title:g.title,retail:d.prices.currentRetail,keyshop:d.prices.currentKeyshops});
+          // fetched_at sent through so the sheet stamps GamePrices.last_fetched
+          // with this exact same client timestamp instead of its own —
+          // otherwise that's a different clock than PriceHistory.fetched_at
+          // below, and comparing the two later (getLatestFetchDiffs) can
+          // misread real changes in this batch as unchanged.
+          priceEntries.push({appid:g.steamAppId,title:g.title,retail:d.prices.currentRetail,keyshop:d.prices.currentKeyshops,fetched_at:fetchTs});
           // PriceHistory is append-only forever, so a game whose price sits
           // unchanged for months (common — most of a wishlist isn't moving
           // on any given day) would otherwise get an identical new row on

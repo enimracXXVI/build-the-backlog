@@ -447,12 +447,22 @@ function upsertGamePrices(entries) {
 
   const newLows = [];
   const lows = {}; // appid -> { retail, keyshop } personal-low AFTER this upsert
-  const now = Date.now();
+  const serverNow = Date.now();
 
   entries.forEach(entry => {
     const retail  = parseFloat(entry.retail)  || 0;
     const keyshop = parseFloat(entry.keyshop) || 0;
     const key = String(entry.appid);
+    // Use the browser's own timestamp for this batch when it sends one, so
+    // this always matches PriceHistory.fetched_at for the same batch
+    // exactly — comparing the two elsewhere (getLatestFetchDiffs) used to
+    // mix this server clock with that client clock, which are never
+    // perfectly in sync; the server's clock always reads slightly later
+    // (network + script run time), which could put a whole batch's
+    // PriceHistory rows before this sheet's own notion of when that same
+    // batch started, misreading real price drops as "no change". Falls
+    // back to the server clock only if an older client doesn't send one.
+    const fetchedAt = Number(entry.fetched_at) || serverNow;
 
     if (key in idx) {
       const i = idx[key];
@@ -468,7 +478,7 @@ function upsertGamePrices(entries) {
       data[i][c('title')]        = entry.title;
       data[i][c('last_retail')]  = retail  || '';
       data[i][c('last_keyshop')] = keyshop || '';
-      data[i][c('last_fetched')] = now;
+      data[i][c('last_fetched')] = fetchedAt;
       if (retail  > 0 && retail  <= prevLowR) data[i][c('personal_low_retail')]  = retail;
       if (keyshop > 0 && keyshop <= prevLowK) data[i][c('personal_low_keyshop')] = keyshop;
       if (bestNew !== Infinity && bestNew < prevOverallLow) newLows.push(key);
@@ -484,7 +494,7 @@ function upsertGamePrices(entries) {
       row[c('last_keyshop')]         = keyshop || '';
       row[c('personal_low_retail')]  = retail  || '';
       row[c('personal_low_keyshop')] = keyshop || '';
-      row[c('last_fetched')]         = now;
+      row[c('last_fetched')]         = fetchedAt;
       idx[key] = data.length;
       data.push(row);
       // A brand-new game has no prior price to beat, so its first-ever
