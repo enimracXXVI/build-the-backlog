@@ -11,7 +11,7 @@ const GG_WORKER = (typeof window !== 'undefined' && window.BTB_GGDEALS_WORKER) |
 // Bump alongside sw.js's CACHE on every merge that touches app.js/index.html/
 // style.css — the pair is how a deploy can be visually confirmed live instead
 // of trusting a service worker to have actually picked up the new build.
-const APP_VERSION = '31';
+const APP_VERSION = '32';
 let ggPriceCache = {};
 // Plain fetch() has no timeout — a stalled request (dead connection, Worker
 // cold-start, upstream throttling) leaves an await stuck forever with no way
@@ -220,6 +220,18 @@ function syncLegacyFromPurchases(g){
 }
 function gamePurchases(g){return Array.isArray(g.purchases)?g.purchases:[]}
 function ownedPlatforms(g){return gamePurchases(g).map(p=>p.platform)}
+// g.purchaseDate is always purchases[0]'s date, regardless of platform —
+// fine with no platform filter active, but wrong once one is: a Steam
+// purchase would sort/group by an unrelated Epic purchase's date just
+// because that one happened to be added to the record first. When a
+// platform filter is active, use that platform's own purchase date instead.
+function _effectivePurchaseDate(g){
+  if(cfPlats.size>0){
+    const match=gamePurchases(g).find(p=>cfPlats.has(p.platform));
+    if(match)return match.purchaseDate||'';
+  }
+  return g.purchaseDate||'';
+}
 function purchaseByPlat(g,plat){return gamePurchases(g).find(p=>p.platform===plat)||null}
 function gameTotalCost(g){return gamePurchases(g).reduce((s,p)=>s+(parseFloat(p.cost)||0),0)}
 function gameFilteredCost(g,platSet){
@@ -1221,7 +1233,9 @@ function collectionSorted(list){
       // 2031"), never DD/MM/YYYY — the old regex here never matched it and
       // returned '' for every game, so this "sort" silently did nothing.
       // normaliseDate already has a case for exactly this format.
-      return(normaliseDate(b.purchaseDate)||'').localeCompare(normaliseDate(a.purchaseDate)||'');
+      // _effectivePurchaseDate also picks the filtered platform's own date
+      // when one's selected, instead of always purchases[0]'s.
+      return(normaliseDate(_effectivePurchaseDate(b))||'').localeCompare(normaliseDate(_effectivePurchaseDate(a))||'');
     }
     // default: steamcol — group by first collection, then title
     const ca=(a.steamCollection&&a.steamCollection[0])||'zzz';
@@ -2020,11 +2034,12 @@ function _renderCollectionInner(){
       } else if(sortBy === 'playstatus') {
         addToGroup(g.playStatus || 'Unplayed', g);
       } else if(sortBy === 'purchaseDate') {
-        if(!g.purchaseDate) { addToGroup('Unknown', g); return; }
+        const pd=_effectivePurchaseDate(g);
+        if(!pd) { addToGroup('Unknown', g); return; }
         // Same fix as collectionSorted's _pdKey — purchaseDate is "DD Mon
         // YYYY", not DD/MM/YYYY, so slicing the raw string grabbed garbage
         // like "31 O" instead of the year.
-        const n = normaliseDate(g.purchaseDate);
+        const n = normaliseDate(pd);
         const yr = /^\d{4}-\d{2}-\d{2}$/.test(n) ? n.slice(0,4) : 'Unknown';
         addToGroup(yr, g);
       } else if(sortBy === 'cost-desc' || sortBy === 'cost-asc') {
