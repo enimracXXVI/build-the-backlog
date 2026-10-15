@@ -11,7 +11,7 @@ const GG_WORKER = (typeof window !== 'undefined' && window.BTB_GGDEALS_WORKER) |
 // Bump alongside sw.js's CACHE on every merge that touches app.js/index.html/
 // style.css — the pair is how a deploy can be visually confirmed live instead
 // of trusting a service worker to have actually picked up the new build.
-const APP_VERSION = '30';
+const APP_VERSION = '31';
 let ggPriceCache = {};
 // Plain fetch() has no timeout — a stalled request (dead connection, Worker
 // cold-start, upstream throttling) leaves an await stuck forever with no way
@@ -1217,8 +1217,11 @@ function collectionSorted(list){
     if(s==='cost-desc')return gameTotalCost(b)-gameTotalCost(a);
     if(s==='cost-asc')return gameTotalCost(a)-gameTotalCost(b);
     if(s==='purchaseDate'){
-      function _pdKey(d){if(!d)return'';const m=d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);return m?`${m[3]}-${m[2]}-${m[1]}`:''}
-      return _pdKey(b.purchaseDate).localeCompare(_pdKey(a.purchaseDate));
+      // purchaseDate is stored as fmtDate()'s "DD Mon YYYY" (e.g. "31 Oct
+      // 2031"), never DD/MM/YYYY — the old regex here never matched it and
+      // returned '' for every game, so this "sort" silently did nothing.
+      // normaliseDate already has a case for exactly this format.
+      return(normaliseDate(b.purchaseDate)||'').localeCompare(normaliseDate(a.purchaseDate)||'');
     }
     // default: steamcol — group by first collection, then title
     const ca=(a.steamCollection&&a.steamCollection[0])||'zzz';
@@ -2018,8 +2021,11 @@ function _renderCollectionInner(){
         addToGroup(g.playStatus || 'Unplayed', g);
       } else if(sortBy === 'purchaseDate') {
         if(!g.purchaseDate) { addToGroup('Unknown', g); return; }
-        const m = g.purchaseDate.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-        const yr = m ? m[3] : g.purchaseDate.slice(0,4) || 'Unknown';
+        // Same fix as collectionSorted's _pdKey — purchaseDate is "DD Mon
+        // YYYY", not DD/MM/YYYY, so slicing the raw string grabbed garbage
+        // like "31 O" instead of the year.
+        const n = normaliseDate(g.purchaseDate);
+        const yr = /^\d{4}-\d{2}-\d{2}$/.test(n) ? n.slice(0,4) : 'Unknown';
         addToGroup(yr, g);
       } else if(sortBy === 'cost-desc' || sortBy === 'cost-asc') {
         const c = gameTotalCost(g);
