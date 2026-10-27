@@ -4,6 +4,24 @@
 // `?search=<term>` (title search, used by the app's "Store link" field
 // to find an App ID without leaving the app).
 
+async function fetchJson(url, ms = 10000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) return null;
+    try {
+      return await res.json();
+    } catch {
+      return null;
+    }
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export default {
   async fetch(req) {
     const url = new URL(req.url);
@@ -14,11 +32,10 @@ export default {
 
     const search = url.searchParams.get("search");
     if (search) {
-      const res = await fetch(
+      const data = await fetchJson(
         `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(search)}&l=english&cc=it`
       );
-      const data = await res.json();
-      return Response.json(data, { headers });
+      return Response.json(data || { items: [] }, { headers });
     }
 
     const id = url.searchParams.get("appid");
@@ -26,11 +43,10 @@ export default {
       return new Response("Missing ?appid= or ?search= parameter", { status: 400 });
     }
 
-    const res = await fetch(
-      `https://store.steampowered.com/api/appdetails/?cc=italian&l=english&appids=${id}`
+    const data = await fetchJson(
+      `https://store.steampowered.com/api/appdetails/?cc=it&l=english&appids=${id}`
     );
-    const data = await res.json();
 
-    return Response.json(data, { headers });
+    return Response.json(data || { [id]: { success: false } }, { headers });
   }
 };
