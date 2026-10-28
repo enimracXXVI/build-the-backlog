@@ -11,7 +11,7 @@ const GG_WORKER = (typeof window !== 'undefined' && window.BTB_GGDEALS_WORKER) |
 // Bump alongside sw.js's CACHE on every merge that touches app.js/index.html/
 // style.css — the pair is how a deploy can be visually confirmed live instead
 // of trusting a service worker to have actually picked up the new build.
-const APP_VERSION = '32';
+const APP_VERSION = '33';
 let ggPriceCache = {};
 // Plain fetch() has no timeout — a stalled request (dead connection, Worker
 // cold-start, upstream throttling) leaves an await stuck forever with no way
@@ -1002,6 +1002,9 @@ function normaliseDate(raw){
   // "25 Nov 2019" display format produced by fmtDate
   const dm=String(raw).match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
   if(dm){const MM={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};const[,d,mo,y]=dm;const moN=MM[mo.charAt(0).toUpperCase()+mo.slice(1,3).toLowerCase()];if(moN)return`${y}-${String(moN).padStart(2,'0')}-${d.padStart(2,'0')}`;}
+  // Bare year ("2027", e.g. typed into the TBA text field) is deliberately
+  // imprecise — don't let native Date parsing below invent a fake Jan 1 date.
+  if(/^\d{4}$/.test(s))return s;
   // Last resort: try native Date parsing (handles "Mon Apr 25 2024 ..." etc.)
   const fd=new Date(String(raw));
   if(!isNaN(fd)&&fd.getFullYear()>1900){return`${fd.getFullYear()}-${String(fd.getMonth()+1).padStart(2,'0')}-${String(fd.getDate()).padStart(2,'0')}`}
