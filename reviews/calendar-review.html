@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Calendar — Style Review</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+.audit-wrap{max-width:1280px;margin:0 auto;padding:2rem 1.2rem 6rem;font-family:'Inter',sans-serif}
+.audit-h1{font-family:'Rajdhani',sans-serif;font-size:1.9rem;font-weight:700;color:var(--text);margin-bottom:.3rem}
+.audit-sub{color:var(--t2);font-size:.9rem;margin-bottom:1.4rem;max-width:880px;line-height:1.5}
+.audit-toc{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:2rem;font-size:.75rem}
+.audit-toc a{color:var(--blue);border:1px solid var(--bd2);border-radius:99px;padding:.25rem .65rem}
+.audit-note{font-size:.72rem;color:var(--amber);background:#f7cd2610;border:1px solid #f7cd2640;border-radius:6px;padding:.5rem .8rem;margin-bottom:2rem}
+
+.sec{margin-bottom:3rem}
+.sec-hdr{display:flex;align-items:baseline;gap:.8rem;border-bottom:2px solid var(--bd2);padding-bottom:.5rem;margin-bottom:.8rem}
+.sec-hdr h2{font-family:'Rajdhani',sans-serif;font-size:1.5rem;font-weight:700;color:var(--text)}
+.sec-tag{font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:99px;padding:.15rem .55rem}
+.sec-tag.desk{background:#02b3fc18;color:var(--blue);border:1px solid #02b3fc44}
+.sec-tag.mob{background:#ff00aa18;color:var(--pink);border:1px solid #ff00aa44}
+.sec-tag.both{background:#9cff0018;color:var(--lime);border:1px solid #9cff0044}
+.sec-desc{color:var(--t2);font-size:.82rem;line-height:1.6;max-width:900px;margin-bottom:1rem}
+.sec-desc code{color:var(--amber);font-size:.78rem}
+
+.stage{background:var(--s1);border:1px solid var(--bd2);border-radius:var(--rl);padding:1.1rem;margin-bottom:1rem}
+.stage-lbl{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--t3);margin-bottom:.7rem}
+
+.class-table{width:100%;border-collapse:collapse;font-size:.74rem;margin-top:.5rem}
+.class-table th{text-align:left;color:var(--t3);font-family:'Rajdhani',sans-serif;font-size:.62rem;letter-spacing:.05em;
+  text-transform:uppercase;padding:.3rem .5rem;border-bottom:1px solid var(--bd)}
+.class-table td{padding:.4rem .5rem;border-bottom:1px solid var(--bd);color:var(--text);vertical-align:top}
+.class-table tr:last-child td{border-bottom:none}
+.class-table code{font-family:monospace;font-size:.7rem;color:var(--amber)}
+
+.mob-frame{width:380px;height:900px;border:1px solid var(--bd2);border-radius:16px;overflow:hidden;background:var(--base)}
+.mob-frame iframe{width:100%;height:100%;border:none}
+.mob-wrap{display:flex;justify-content:center}
+
+/* mini calendar overlay styled to sit inline instead of fixed, for desktop stage */
+.stage-cal{background:var(--s1);border:1px solid var(--bd2);border-radius:var(--rl);width:100%;max-width:900px;margin:0 auto}
+</style>
+</head>
+<body style="overflow:auto;height:auto;display:block">
+<div class="audit-wrap">
+
+<div class="audit-h1">Release Calendar — Style Review</div>
+<div class="audit-sub">
+  Live rendering of the calendar modal's components, pulled straight from <code>style.css</code> — this is a
+  separate document from the Pill/Badge/Chip/Stat reference since the calendar review concluded most of its pieces
+  (list rows, popover rows, TBA rows, header chrome) are full navigational rows / UI chrome rather than instances
+  of that taxonomy, with <code>.cal-count</code> noted as a deliberate exception left outside it. Desktop and mobile
+  render genuinely different markup/CSS in places (not just a resize) — each section is tagged for where it applies.
+  The mobile block on the right is a live <code>&lt;iframe&gt;</code> at 380px width, so the real
+  <code>@media(max-width:640px)</code> rules are actually active, not simulated.
+</div>
+<div class="audit-toc">
+  <a href="#cal-hdr-sec">Header &amp; Nav</a>
+  <a href="#grid">Month Grid</a>
+  <a href="#count">Day Count + Popover</a>
+  <a href="#tba">Undated List</a>
+  <a href="#list">Mobile Month Grid</a>
+  <a href="#ticker">Out-Today Ticker</a>
+  <a href="#swipe">Mobile Month Swipe</a>
+  <a href="#classes">Full Class Reference</a>
+</div>
+<div class="audit-note">Documentation only — no app code has been changed. Use this to call out what you want adjusted.</div>
+
+<!-- HEADER & NAV -->
+<div class="sec" id="cal-hdr-sec">
+  <div class="sec-hdr"><h2>Header &amp; Nav</h2><span class="sec-tag both">desktop + mobile (same markup, CSS reflows)</span></div>
+  <div class="sec-desc">Title, month/year selects, prev/next arrows, TBA toggle (mobile only), close button. On mobile
+    the arrows hide (<code>.cal-arrow{display:none}</code>) and the row wraps to two lines via
+    <code>.cal-hdr-inner{flex-wrap:wrap}</code> — month/year selects become the primary nav control since arrow
+    buttons disappear.</div>
+  <div class="stage">
+    <div class="stage-lbl">Desktop</div>
+    <div class="stage-cal">
+      <div id="calHdr" style="border-bottom:1px solid var(--bd)">
+        <div class="cal-hdr-inner">
+          <span class="cal-hdr-title">Release Calendar</span>
+          <div class="cal-hdr-nav">
+            <button class="hb cal-arrow accent">‹</button>
+            <select class="ts cal-month-sel"><option>July</option></select>
+            <select class="ts cal-year-sel"><option>2026</option></select>
+            <button class="hb cal-arrow accent">›</button>
+          </div>
+          <div class="cal-hdr-right">
+            <button class="fbar-pill cal-tba-toggle" style="display:none">UNDATED<span class="fbar-pill-count fpc-dark"></span></button>
+            <button class="hb accent">✕</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="stage" style="padding:0">
+    <div class="stage-lbl" style="padding:1.1rem 1.1rem 0">Mobile (380px, live iframe)</div>
+    <div class="mob-wrap" style="padding:.7rem 0 1.1rem">
+      <div style="width:380px;border:1px solid var(--bd2);border-radius:16px;overflow:hidden">
+        <iframe src="calendar-review-mobile-hdr.html" style="width:100%;height:110px;border:none" scrolling="no"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MONTH GRID -->
+<div class="sec" id="grid">
+  <div class="sec-hdr"><h2>Month Grid</h2><span class="sec-tag desk">desktop only</span></div>
+  <div class="sec-desc">Desktop stacks two months vertically (<code>.cal-2stack &gt; .cal-months-col</code>), each a
+    7-column grid (<code>.cal-grid</code>) of fixed 46×46px cells (<code>.cal-cell</code>). Mobile reuses the exact
+    same <code>renderMonthGrid()</code> function for a single month, with fluid <code>1fr</code> columns and
+    <code>aspect-ratio:1</code> cells instead of the fixed 46px — see the Mobile Month Grid section below. Adjacent-month
+    filler days render dimmed (<code>.other-month</code>, 20% opacity). Today gets a blue cell border + blue day
+    number; past days in the current month fade their day number to 40% opacity.</div>
+  <div class="stage">
+    <div class="stage-lbl">Desktop — July / August 2026 (sample data)</div>
+    <div class="stage-cal" style="padding:.5rem .6rem">
+      <div class="cal-2stack" id="gridDemo"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY COUNT + POPOVER -->
+<div class="sec" id="count">
+  <div class="sec-hdr"><h2>Day-Count Bubble + Popover</h2><span class="sec-tag desk">desktop only</span></div>
+  <div class="sec-desc">
+    <code>.cal-count</code> — a 22×22px circle in the bottom of a day cell showing how many releases land that day.
+    Blue (<code>var(--blue)</code>) normally, amber (<code>var(--amber)</code>, <code>.has-pre</code>) if any of that
+    day's games is a pre-order. No border at rest anymore — the old <code>border:2px solid transparent</code> was
+    dead CSS (never overridden anywhere; the hover ring already gives feedback via <code>box-shadow</code>), removed.
+    Click opens <code>#calFloatPop.cal-pop</code>, a singleton <code>position:fixed</code> popover listing each game
+    — each row carries the same priority-colored left border as the Undated list (<code>.prio-high/medium/low</code>).
+    Dots and badges have been dropped entirely across the calendar/DLC/Undated surfaces in favor of coloring the
+    game title text itself by status (<code>.st-preorder</code>=amber, <code>.st-owned</code>=green,
+    <code>.st-cancelled</code>=red, <code>.st-removed</code>=dim <code>var(--t3)</code>) — one mechanism instead of
+    three, and no extra width needed per row. <b>Live demo below — click a bubble.</b>
+    This is the one calendar element flagged as a deliberate taxonomy exception: it acts like a Chip (standalone, own
+    click action) but its shape (perfect circle, number instead of a text label) doesn't match Chip canon, so per
+    your call it stays a standalone "counter bubble" pattern rather than being folded in.
+  </div>
+  <div class="stage">
+    <div class="stage-lbl">Desktop — try clicking a bubble</div>
+    <div class="stage-cal" style="padding:.5rem .6rem;position:relative;min-height:120px">
+      <div class="cal-2stack" id="countDemo" style="justify-content:flex-start"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TBA LIST -->
+<div class="sec" id="tba">
+  <div class="sec-hdr"><h2>Undated List</h2><span class="sec-tag both">different layout per breakpoint</span></div>
+  <div class="sec-desc">Games with a non-ISO release date (e.g. blank, "TBA", "2027"). On desktop it's a sidebar
+    (<code>.cal-tba-wide</code>, 2-column grid of <code>.cal-tba-chip</code> rows, paginated 20/page with swipe/drag)
+    — now hidden entirely (no reserved space, no "None" placeholder) when there are zero TBA-date games, letting the
+    month grid use the full width. On mobile there's no room for a sidebar, so it collapses into a header toggle
+    — now a proper Filter Pill (<code>.fbar-pill.cal-tba-toggle</code> with a <code>.fbar-pill-count</code> sub-chip,
+    matching every other filter pill's count convention instead of baking "(4)" into the button text) — that swaps
+    the entire body over to the same TBA list full-width, hiding the month view; also hidden when zero TBA games.
+    Each <code>.cal-tba-chip</code> gets a 3px left-border accent from the game's priority (<code>.prio-high</code>=blue,
+    <code>.prio-medium</code>=pink, <code>.prio-low</code>=lime) — confirmed: yes, this reuses the exact same 3 hex
+    values as the Priority pill/badge but through a different mechanism (border-left, not fill), so it's a soft
+    crossover worth checking when you get to the pill/badge color pass. This same left-border pattern is shared with
+    the popover rows above. The full <code>border:1px solid var(--bd)</code> frame around each chip has been removed
+    — it's now borderless except the left accent, matching the popover/DLC convention and fixing the row spacing
+    mismatch (the border was eating the gap between chips that the popover/DLC rows didn't have). Chip titles are
+    now also colored by status (pre-order=amber, owned=green, cancelled=red, removed=dim) the same as the popover
+    and DLC panel — see the Day-Count + Popover section above for the color list. Open question: chip titles can
+    still silently truncate (2-column grid + ellipsis, no wrap) — a 1-column layout would fix it but roughly doubles
+    the vertical space needed per page; flagging for a decision rather than changing unilaterally.</div>
+  <div class="stage">
+    <div class="stage-lbl">Desktop — permanent sidebar</div>
+    <div class="stage-cal" style="padding:.75rem .85rem;display:flex">
+      <div style="flex:1;color:var(--t3);font-size:.72rem;padding:1rem">(month grid area — see above)</div>
+      <div class="cal-tba-wide" style="max-width:340px">
+        <div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:.6rem;flex-shrink:0">Undated</div>
+        <div class="cal-tba-grid">
+          <div class="cal-tba-chip prio-high" title="Voidbreaker — TBA"><span class="cal-tba-chip-title st-preorder">Voidbreaker</span><span class="cal-tba-chip-sub">TBA</span></div>
+          <div class="cal-tba-chip prio-medium" title="Ashen Court — TBA"><span class="cal-tba-chip-title">Ashen Court</span><span class="cal-tba-chip-sub">TBA</span></div>
+          <div class="cal-tba-chip prio-low" title="Glass Meridian — TBA"><span class="cal-tba-chip-title">Glass Meridian</span><span class="cal-tba-chip-sub">TBA</span></div>
+          <div class="cal-tba-chip prio-medium" title="Echo District — TBA"><span class="cal-tba-chip-title">Echo District</span><span class="cal-tba-chip-sub">TBA</span></div>
+        </div>
+        <div class="tba-pagination" style="display:flex">
+          <button class="tba-page-btn" disabled>‹</button>
+          <div class="tba-page-dot active"></div>
+          <div class="tba-page-dot"></div>
+          <button class="tba-page-btn">›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="stage" style="padding:0">
+    <div class="stage-lbl" style="padding:1.1rem 1.1rem 0">Mobile — toggled full-panel (live iframe)</div>
+    <div class="mob-wrap" style="padding:.7rem 0 1.1rem">
+      <div style="width:380px;border:1px solid var(--bd2);border-radius:16px;overflow:hidden">
+        <iframe src="calendar-review-mobile-tba.html" style="width:100%;height:430px;border:none" scrolling="no"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE MONTH GRID -->
+<div class="sec" id="list">
+  <div class="sec-hdr"><h2>Mobile Month Grid</h2><span class="sec-tag mob">mobile only</span></div>
+  <div class="sec-desc">Originally a flat list grouped by day; replaced entirely with a real single-month grid
+    reusing the exact same <code>renderMonthGrid()</code> function desktop uses, so mobile gets the same
+    day-count bubble + tap-to-open popover interaction instead of a second, different interaction pattern for the
+    same data. <code>.cal-grid</code>/<code>.cal-cell</code> get a mobile override since the desktop fixed-46px
+    sizing assumed the 358px sidebar column width. Column width was originally <code>repeat(7,1fr)</code> +
+    <code>aspect-ratio:1</code> on cells — on real devices this produced a visibly off-center grid (left gap wider
+    than right), confirmed by pixel-measuring user screenshots even though it could not be reproduced in a
+    Chromium/Playwright sandbox at any tested viewport width. Replaced with an explicit
+    <code>repeat(7,calc((100% - 9px)/7))</code> so column width comes from deterministic math instead of the
+    browser's own <code>1fr</code> distribution — awaiting real-device confirmation this resolves it.
+    The old list-view code (<code>.cal-list-item</code>/<code>.cal-list-day</code> etc.) has been deleted entirely,
+    not just hidden.</div>
+  <div class="stage" style="padding:0">
+    <div class="stage-lbl" style="padding:1.1rem 1.1rem 0">Mobile (live iframe)</div>
+    <div class="mob-wrap" style="padding:.7rem 0 1.1rem">
+      <div style="width:380px;border:1px solid var(--bd2);border-radius:16px;overflow:hidden">
+        <iframe src="calendar-review-mobile-grid.html" style="width:100%;height:480px;border:none" scrolling="no"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="sec" id="ticker">
+  <div class="sec-hdr"><h2>Out-Today Ticker</h2><span class="sec-tag both">identical on both — no mobile CSS override</span></div>
+  <div class="sec-desc">Lives above the main header (<code>#todayTicker</code>), shown only when something releases
+    today. Fixed pink ribbon label (<code>.ticker-label</code>, solid <code>var(--pink)</code> fill) + a row of
+    clickable plain-text items (<code>.ticker-item</code>, no box — closer to a Stat than anything else, except it's
+    clickable, which Stat by definition isn't). <code>renderTicker()</code> now measures the item row against the
+    visible bar width after render: if it fits, it just sits still (unchanged from before); if it overflows, the
+    content is duplicated once and animated with a linear <code>translateX(0 → -50%)</code> loop — the duplicate
+    makes the loop seamless (the second copy is pixel-identical to the first, so the wrap-around is invisible).
+    Hovering pauses the scroll so items stay clickable. Re-measured on window resize (debounced).</div>
+  <div class="stage">
+    <div class="stage-lbl">Fits — static (no animation, same as before)</div>
+    <div id="todayTicker" class="active" style="display:flex;position:relative;border-radius:6px;overflow:hidden">
+      <div class="ticker-label">OUT TODAY</div>
+      <div class="ticker-track">
+        <div class="ticker-inner">
+          <span class="ticker-item">Short Game</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="stage">
+    <div class="stage-lbl">Overflows — marquee engages (live CSS animation, hover to pause)</div>
+    <div id="todayTicker2" class="active" style="display:flex;position:relative;border-radius:6px;overflow:hidden;max-width:480px">
+      <div class="ticker-label">OUT TODAY</div>
+      <div class="ticker-track">
+        <div class="ticker-inner marquee" style="animation-duration:14s">
+          <span class="ticker-item">A Very Long Game Title That Causes Overflow</span>
+          <span class="ticker-item">Another Long Release Title For Testing</span>
+          <span class="ticker-item">Yet One More Title To Force The Marquee</span>
+          <span class="ticker-item">A Very Long Game Title That Causes Overflow</span>
+          <span class="ticker-item">Another Long Release Title For Testing</span>
+          <span class="ticker-item">Yet One More Title To Force The Marquee</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE MONTH SWIPE -->
+<div class="sec" id="swipe">
+  <div class="sec-hdr"><h2>Mobile Month Swipe</h2><span class="sec-tag mob">mobile only</span></div>
+  <div class="sec-desc">Swiping the month grid left/right changes the visible month. Simplified to match the exact
+    mechanic the Undated list's own carousel already used, per your call to make the two consistent rather than
+    inventing a second swipe feel: <code>#calMain</code> live-follows the finger via <code>translateX</code> on
+    <code>touchmove</code> with no hint overlay and no fade — plain drag-and-follow. On <code>touchend</code>, if the
+    drag committed (&gt;50px, horizontal-dominant) it snaps straight to the next/prev month; otherwise it snaps back
+    to place, both using the same <code>.3s cubic-bezier(.4,0,.2,1)</code> easing as the Undated list. The earlier
+    version (chevron hint fade-in + slide/fade month transition, <code>.16–.18s ease</code>) has been removed —
+    <code>.cal-swipe-hint-l</code> / <code>.cal-swipe-hint-r</code> are gone from both the CSS and the markup, not
+    just hidden.</div>
+</div>
+
+<!-- FULL CLASS REFERENCE -->
+<div class="sec" id="classes">
+  <div class="sec-hdr"><h2>Full Class Reference</h2></div>
+  <table class="class-table">
+    <tr><th>Class</th><th>Where</th><th>Notes</th></tr>
+    <tr><td><code>.cal-hdr-inner</code> / <code>.cal-hdr-title</code> / <code>.cal-hdr-nav</code> / <code>.cal-hdr-right</code></td><td>Both</td><td>Header layout wrapper; wraps to 2 rows &lt;640px</td></tr>
+    <tr><td><code>.cal-arrow</code></td><td>Desktop only</td><td>Base <code>.hb.accent</code>, hidden entirely on mobile</td></tr>
+    <tr><td><code>.cal-month-sel</code> / <code>.cal-year-sel</code></td><td>Both</td><td>Base <code>.ts</code> plain select, no custom dropdown styling</td></tr>
+    <tr><td><code>.cal-tba-toggle</code></td><td>Mobile only</td><td>Now <code>.fbar-pill</code> (Filter Pill) with a <code>.fbar-pill-count</code> sub-chip; <code>.selected</code> when panel open; <code>.cal-tba-empty</code> hides it (and the desktop sidebar) when zero TBA games</td></tr>
+    <tr><td><code>.cal-2stack</code> / <code>.cal-months-col</code> / <code>.cal-month-block</code> / <code>.cal-month-label</code></td><td>Both</td><td>Grid wrapper; 2 months stacked on desktop, 1 on mobile (full-width instead of the fixed 358px)</td></tr>
+    <tr><td><code>.cal-grid</code> / <code>.cal-dow</code> / <code>.cal-cell</code> / <code>.cal-dn</code></td><td>Both</td><td>7-col day grid — fixed 46×46px cells on desktop, fluid <code>1fr</code> columns + <code>aspect-ratio:1</code> on mobile</td></tr>
+    <tr><td><code>.cal-count</code></td><td>Both</td><td>Day-count circle; blue / amber(<code>.has-pre</code>); opens popover; dead <code>border:2px solid transparent</code> removed</td></tr>
+    <tr><td><code>.cal-pop</code> / <code>.cal-pop-item</code> / <code>.cal-pop-item-title</code></td><td>Both</td><td>Singleton fixed-position popover triggered by <code>.cal-count</code>; rows carry the priority left-border; title text carries the status-color class instead of a badge</td></tr>
+    <tr><td><code>.cal-tba-wide</code> / <code>.cal-tba-grid</code></td><td>Desktop: sidebar, hidden when empty. Mobile: full-width panel toggled by <code>.cal-tba-toggle</code></td><td>Same chip markup both places; grid is 1 column (was 2) so titles stop silently truncating</td></tr>
+    <tr><td><code>.cal-tba-chip</code> / <code>.cal-tba-chip-title</code> / <code>.cal-tba-chip-sub</code></td><td>Both (inside <code>.cal-tba-wide</code>)</td><td>Priority-colored left border via <code>.prio-high/medium/low</code>, shared with <code>.cal-pop-item</code> and (border-width only) <code>.panel-base-game</code>; outer frame border removed, borderless except the left accent</td></tr>
+    <tr><td><code>.st-owned</code> / <code>.st-preorder</code> / <code>.st-cancelled</code> / <code>.st-removed</code></td><td>Both, plus DLC panel</td><td>Status-color title text, replacing the old DLC dot and popover/TBA pre-order badge: green / amber / red / dim <code>var(--t3)</code>. Cancelled games stay excluded from the calendar grid and Undated list regardless (color only ever shows for DLC panel rows there)</td></tr>
+    <tr><td><code>.tba-list-viewport</code> / <code>.tba-list-track</code> / <code>.tba-list-page</code></td><td>Both</td><td>Swipe/drag pagination for TBA list; page size is measured from the real rendered row height each render (not a hardcoded count), so every page is exactly what fits with zero clipping</td></tr>
+    <tr><td><code>.tba-pagination</code> / <code>.tba-page-dot</code> / <code>.tba-page-btn</code></td><td>Both</td><td>Dot pager, only rendered when &gt;1 page</td></tr>
+    <tr><td><code>#todayTicker</code> / <code>.ticker-label</code> / <code>.ticker-track</code> / <code>.ticker-inner</code> / <code>.ticker-item</code></td><td>Both, identical</td><td>No dedicated mobile CSS at all</td></tr>
+    <tr><td><code>.ticker-inner.marquee</code></td><td>Both, identical</td><td>New — only applied when content overflows the bar; content duplicated once for a seamless <code>translateX(-50%)</code> loop; paused on hover</td></tr>
+  </table>
+</div>
+
+</div>
+
+<script>
+const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const todayISO='2026-07-02';
+const SAMPLE={
+  '2026-07-04':[{t:'Starfall Odyssey',pre:true,prio:'prio-high'}],
+  '2026-07-09':[{t:'Nightfall Protocol',prio:'prio-medium'}],
+  '2026-07-18':[{t:'Rust Vanguard',prio:'prio-low'},{t:'Glass Meridian',prio:'prio-medium'},{t:'Echo District',prio:'prio-medium'}],
+  '2026-08-14':[{t:'Ashen Court',prio:'prio-medium'}],
+  '2026-08-27':[{t:'Voidbreaker',pre:true,prio:'prio-high'},{t:'Twin Peaks Reborn',prio:'prio-low'}]
+};
+function renderMonthGrid(year,month,withCounts){
+  const DAYS=['M','T','W','T','F','S','S'];
+  const isCurrentMonth=(year===2026&&month===6);
+  const firstDow=(new Date(year,month,1).getDay()+6)%7;
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const daysInPrev=new Date(year,month,0).getDate();
+  let html=`<div class="cal-month-block">`;
+  html+=`<div class="cal-month-label${isCurrentMonth?' is-current':''}">${MONTH_NAMES[month]} ${year}</div>`;
+  html+=`<div class="cal-grid">`;
+  DAYS.forEach(d=>html+=`<div class="cal-dow">${d}</div>`);
+  for(let i=0;i<firstDow;i++) html+=`<div class="cal-cell other-month"><div class="cal-dn">${daysInPrev-firstDow+1+i}</div></div>`;
+  for(let day=1;day<=daysInMonth;day++){
+    const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday=dateStr===todayISO;
+    const isPast=dateStr<todayISO;
+    let countBadge='';
+    if(withCounts&&SAMPLE[dateStr]){
+      const items=SAMPLE[dateStr];
+      const hasPre=items.some(g=>g.pre);
+      countBadge=`<div class="cal-count${hasPre?' has-pre':''}" data-date="${dateStr}">${items.length}</div>`;
+    }
+    html+=`<div class="cal-cell${isToday?' today':''}${isPast?' past':''}"><div class="cal-dn">${day}</div>${countBadge}</div>`;
+  }
+  const totalCells=firstDow+daysInMonth;
+  const remaining=(7-totalCells%7)%7;
+  for(let i=1;i<=remaining;i++) html+=`<div class="cal-cell other-month"><div class="cal-dn">${i}</div></div>`;
+  html+=`</div></div>`;
+  return html;
+}
+document.getElementById('gridDemo').innerHTML=
+  `<div class="cal-months-col">${renderMonthGrid(2026,6,false)}${renderMonthGrid(2026,7,false)}</div>`;
+document.getElementById('countDemo').innerHTML=
+  `<div class="cal-months-col">${renderMonthGrid(2026,6,true)}${renderMonthGrid(2026,7,true)}</div>`;
+
+// wire popover on the count demo
+let pop=document.createElement('div');
+pop.className='cal-pop';
+pop.style.position='fixed';
+document.body.appendChild(pop);
+document.getElementById('countDemo').addEventListener('click',e=>{
+  const badge=e.target.closest('.cal-count');
+  if(!badge)return;
+  e.stopPropagation();
+  const already=pop.classList.contains('open')&&pop.dataset.date===badge.dataset.date;
+  pop.classList.remove('open');
+  if(already)return;
+  const items=SAMPLE[badge.dataset.date]||[];
+  pop.innerHTML=items.map(g=>`<div class="cal-pop-item ${g.prio}"><span class="cal-pop-item-title${g.pre?' st-preorder':''}">${g.t}</span></div>`).join('');
+  pop.dataset.date=badge.dataset.date;
+  const r=badge.getBoundingClientRect();
+  pop.style.top=(r.bottom+6)+'px';
+  pop.style.left=Math.min(r.left,window.innerWidth-230)+'px';
+  pop.classList.add('open');
+});
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.cal-count')&&!e.target.closest('.cal-pop')) pop.classList.remove('open');
+});
+</script>
+</body>
+</html>
