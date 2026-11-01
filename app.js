@@ -11,7 +11,7 @@ const GG_WORKER = (typeof window !== 'undefined' && window.BTB_GGDEALS_WORKER) |
 // Bump alongside sw.js's CACHE on every merge that touches app.js/index.html/
 // style.css — the pair is how a deploy can be visually confirmed live instead
 // of trusting a service worker to have actually picked up the new build.
-const APP_VERSION = '34';
+const APP_VERSION = '35';
 let ggPriceCache = {};
 // Plain fetch() has no timeout — a stalled request (dead connection, Worker
 // cold-start, upstream throttling) leaves an await stuck forever with no way
@@ -4716,7 +4716,7 @@ document.addEventListener('keydown',function(e){
     closeBtn.style.display='none';hideBtn.style.display='';cancelBtn.style.display='';
     bubble.textContent=`0\n/${targets.length}`;
 
-    let updated=0,unchanged=0,failed=0;
+    let updated=0,unchanged=0,failed=0,rateLimited=false;
 
     for(let i=0;i<targets.length;i++){
       if(_rdcAborted)break;
@@ -4732,6 +4732,12 @@ document.addEventListener('keydown',function(e){
         // migrated app id instead of the one requested, so look up the
         // single entry directly rather than by the id we asked for.
         const entry=Object.values(json)[0];
+        if(entry&&(entry._httpStatus===429||entry._httpStatus===403)){
+          // Steam itself is rate-limiting/blocking the worker — every
+          // remaining game would fail the same way, so stop now instead of
+          // burning through the rest as fake permanent failures.
+          rateLimited=true;break;
+        }
         if(!entry||!entry.success||!entry.data){
           _rdcAppendCard(rdcErrCardHTML(g.title,g.steamAppId));
           failed++;continue;
@@ -4764,7 +4770,11 @@ document.addEventListener('keydown',function(e){
     setMenuRunning(['hmRdcBtn','dhDatesBtn'],false);
     _hideConfirm();
     closeBtn.style.display='';hideBtn.style.display='none';cancelBtn.style.display='none';
-    if(_rdcAborted){
+    if(rateLimited){
+      summary.textContent=`Stopped — Steam rate-limited us (${updated} updated, ${unchanged} unchanged so far). Try again in a few minutes.`;
+      // Leave RDC_RUN_KEY in place so the next run resumes from here instead
+      // of re-checking games already confirmed in this run.
+    }else if(_rdcAborted){
       summary.textContent=`Stopped — ${updated} updated, ${unchanged} unchanged${failed?`, ${failed} failed`:''}`;
       _runClear(RDC_RUN_KEY); // explicit Stop means don't offer to resume it later
     }else{
@@ -4855,7 +4865,7 @@ document.addEventListener('keydown',function(e){
     _plcSetFilter('all');
     _plcRunning=true;_plcAborted=false;closeBtn.textContent='Cancel';
     setMenuRunning(['hmSteamPriceBtn','dhSteamPriceBtn'],true);
-    let found=0,unavailable=0,failed=0,pending=0;
+    let found=0,unavailable=0,failed=0,pending=0,rateLimited=false;
     for(let i=0;i<targets.length;i++){
       if(_plcAborted)break;
       const g=targets[i];summary.textContent=`${i+1}/${targets.length} — ${g.title}`;
@@ -4865,6 +4875,12 @@ document.addEventListener('keydown',function(e){
         const json=await res.json();
         // See steamAutoFill's comment — same migrated-app-id lookup fix.
         const entry=Object.values(json)[0];
+        if(entry&&(entry._httpStatus===429||entry._httpStatus===403)){
+          // Steam itself is rate-limiting/blocking the worker — every
+          // remaining game would fail the same way, so stop now instead of
+          // burning through the rest as fake "not found" entries.
+          rateLimited=true;break;
+        }
         if(!entry||!entry.success||!entry.data){plcLog(`✗ ${g.title} — not found on Steam`,'plc-err');failed++;continue;}
         const d=entry.data;
         if(d.price_overview&&d.price_overview.initial!=null){
@@ -4891,7 +4907,8 @@ document.addEventListener('keydown',function(e){
     _plcRunning=false;closeBtn.textContent='Close';
     setMenuRunning(['hmSteamPriceBtn','dhSteamPriceBtn'],false);
     const tail=`${unavailable} delisted${pending?`, ${pending} not live yet`:''}${failed?`, ${failed} failed`:''}`;
-    if(_plcAborted){summary.textContent=`Stopped — ${found} found, ${tail}`;}
+    if(rateLimited){summary.textContent=`Stopped — Steam rate-limited us (${found} found so far). Try again in a few minutes.`;}
+    else if(_plcAborted){summary.textContent=`Stopped — ${found} found, ${tail}`;}
     else{summary.textContent=`Done — ${found} found, ${tail}`;}
     if(found)dispatchRender();
   }
