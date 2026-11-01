@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calendar — Mobile TBA Panel</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+  body{padding:0;margin:0}
+  .frame-lbl{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.68rem;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--pink);padding:.5rem .6rem .25rem}
+  #calOv{position:static!important;display:flex!important;background:none!important;backdrop-filter:none!important;padding:.5rem!important}
+  #calOv>div{width:100%!important;max-width:none!important}
+</style>
+</head>
+<body>
+
+<div class="frame-lbl">TBA Panel (toggled on via TBA button)</div>
+<div id="calOv">
+  <div style="background:var(--s1);border:1px solid var(--bd2);border-radius:var(--rl);width:100%;margin:0 auto">
+    <div id="calHdr" style="border-bottom:1px solid var(--bd)">
+      <div class="cal-hdr-inner">
+        <span class="cal-hdr-title">Release Calendar</span>
+        <div class="cal-hdr-nav">
+          <select class="ts cal-month-sel"><option>July</option></select>
+          <select class="ts cal-year-sel"><option>2026</option></select>
+        </div>
+        <div class="cal-hdr-right">
+          <button class="fbar-pill cal-tba-toggle selected" title="Undated games">UNDATED<span class="fbar-pill-count fpc-dark">4</span></button>
+          <button class="hb accent">✕</button>
+        </div>
+      </div>
+    </div>
+    <div id="calTba" style="display:flex;flex-direction:column;width:100%;border-left:none;padding:.85rem 1rem;min-height:300px">
+      <div style="font-family:Rajdhani,sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:.6rem;flex-shrink:0">Undated</div>
+      <div class="tba-list-viewport" style="height:280px">
+        <div class="tba-list-track">
+          <div class="tba-list-page">
+            <div class="cal-tba-grid">
+              <div class="cal-tba-chip prio-high" title="Voidbreaker — TBA"><span class="cal-tba-chip-title st-preorder">Voidbreaker</span><span class="cal-tba-chip-sub">TBA</span></div>
+              <div class="cal-tba-chip prio-medium" title="Ashen Court — TBA"><span class="cal-tba-chip-title">Ashen Court</span><span class="cal-tba-chip-sub">TBA</span></div>
+              <div class="cal-tba-chip prio-low" title="Glass Meridian — TBA"><span class="cal-tba-chip-title">Glass Meridian</span><span class="cal-tba-chip-sub">TBA</span></div>
+              <div class="cal-tba-chip prio-medium" title="Echo District — TBA"><span class="cal-tba-chip-title">Echo District</span><span class="cal-tba-chip-sub">TBA</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tba-pagination" style="display:flex">
+        <button class="tba-page-btn" disabled>‹</button>
+        <div class="tba-page-dot active"></div>
+        <div class="tba-page-dot"></div>
+        <button class="tba-page-btn">›</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
