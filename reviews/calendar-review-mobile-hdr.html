@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calendar — Mobile Header</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+  body{padding:0;margin:0}
+  .frame-lbl{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.68rem;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--pink);padding:.5rem .6rem .25rem}
+  #calOv{position:static!important;display:flex!important;background:none!important;backdrop-filter:none!important;padding:.5rem!important}
+  #calOv>div{width:100%!important;max-width:none!important}
+</style>
+</head>
+<body>
+
+<div class="frame-lbl">Header (mobile — wraps to 2 rows, arrows hidden)</div>
+<div id="calOv">
+  <div style="background:var(--s1);border:1px solid var(--bd2);border-radius:var(--rl);width:100%;margin:0 auto">
+    <div id="calHdr" style="border-bottom:1px solid var(--bd)">
+      <div class="cal-hdr-inner">
+        <span class="cal-hdr-title">Release Calendar</span>
+        <div class="cal-hdr-nav">
+          <select class="ts cal-month-sel"><option>July</option></select>
+          <select class="ts cal-year-sel"><option>2026</option></select>
+        </div>
+        <div class="cal-hdr-right">
+          <button class="fbar-pill cal-tba-toggle" title="Undated games">UNDATED<span class="fbar-pill-count fpc-dark">4</span></button>
+          <button class="hb accent">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
