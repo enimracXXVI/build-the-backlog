@@ -11,7 +11,7 @@ const GG_WORKER = (typeof window !== 'undefined' && window.BTB_GGDEALS_WORKER) |
 // Bump alongside sw.js's CACHE on every merge that touches app.js/index.html/
 // style.css — the pair is how a deploy can be visually confirmed live instead
 // of trusting a service worker to have actually picked up the new build.
-const APP_VERSION = '35';
+const APP_VERSION = '36';
 let ggPriceCache = {};
 // Plain fetch() has no timeout — a stalled request (dead connection, Worker
 // cold-start, upstream throttling) leaves an await stuck forever with no way
@@ -5528,6 +5528,13 @@ const GG_BATCH_DELAY_S=61;
 let _ggFetchCancelled=false;
 let _ggFetchHidden=false;
 let _ggFetchRunning=false;
+// Bumped by setProgress() while a run is actually alive. A backgrounded tab
+// can get frozen by the OS mid-await without ever throwing — _ggFetchRunning
+// then stays stuck true forever even though nothing is moving — so a stale
+// heartbeat is how openGgFetchModalIdle tells "genuinely still running" apart
+// from "dead, just never got the chance to clean itself up".
+let _ggLastHeartbeat=0;
+const GG_HEARTBEAT_STALE_MS=90*1000;
 // True while openGgFetchModalIdle's getLatestFetchDiffs call is in flight.
 // Refresh Now also waits on this — mainly so a run doesn't start and
 // immediately overwrite the "last results" grid while it's still being
@@ -6126,7 +6133,15 @@ function _showGgResumePrompt(resume){
 // getLatestFetchDiffs), so results are visible from any device, not just
 // the one that ran the fetch. "Refresh Now" inside kicks off a real run.
 async function openGgFetchModalIdle(skipShow){
-  if(_ggFetchRunning){_showGgFetchModal();return}
+  if(_ggFetchRunning&&Date.now()-_ggLastHeartbeat<GG_HEARTBEAT_STALE_MS){_showGgFetchModal();return}
+  if(_ggFetchRunning){
+    // Heartbeat's gone stale — the previous run froze mid-await (OS suspended
+    // the backgrounded tab) rather than actually finishing, erroring, or
+    // being cancelled, so nothing ever reset this flag. Treat it as dead and
+    // fall through to the normal resume-prompt check below.
+    _ggFetchRunning=false;
+    setMenuRunning(['hmPriceBtn','dhPriceBtn'],false);
+  }
   if(!skipShow){
     const resume=_runLoad(GG_RUN_KEY);
     if(resume){_showGgResumePrompt(resume);return}
@@ -6258,6 +6273,7 @@ async function runGGDealsFetch(resumeState){
   const bubble=document.getElementById('ggFetchBubble');
 
   function setProgress(status){
+    _ggLastHeartbeat=Date.now();
     const pct=total>0?Math.round(fetched/total*100):0;
     progressEl.textContent=`${fetched} / ${total} fetched`;
     barEl.style.width=`${pct}%`;
